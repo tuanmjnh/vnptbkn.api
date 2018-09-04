@@ -1,0 +1,4 @@
+{
+  "csharpfixformat.style.spaces.beforeParenthesis": false,
+  "prettier.singleQuote": true
+}

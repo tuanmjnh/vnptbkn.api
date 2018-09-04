@@ -1,0 +1,2 @@
+dotnet new --install Microsoft.AspNetCore.SpaTemplates::*
+dotnet new lib -o TM.Core -f netcoreapp2.1
