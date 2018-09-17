@@ -9,12 +9,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
     // [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : Controller {
-        private TM.Core.Connection.Oracle db;
         private IConfiguration _config;
         private Microsoft.Extensions.Primitives.StringValues authorizationToken;
         public AuthController(IConfiguration config) {
@@ -33,13 +33,11 @@ namespace VNPTBKN.API.Controllers {
         [HttpPost, Microsoft.AspNetCore.Authorization.AllowAnonymous]
         public async Task<IActionResult> Post([FromBody] Authentication.Core.Users data) {
             try {
-
                 var Authorization = TM.Core.HttpContext.Http.Request.Headers.TryGetValue("Authorization", out authorizationToken);;
                 var Author = TM.Core.HttpContext.Http.Request.Headers["Author"].ToString();
-                db = new TM.Core.Connection.Oracle();
                 var qry = $"select * from users where username='{data.username}'";
                 //AuthDB
-                var user = await db.Connection.QueryFirstOrDefaultAsync<Authentication.Core.Users>(qry);
+                var user = await db.Connection().QueryFirstOrDefaultAsync<Authentication.Core.Users>(qry);
 
                 //Account not Exist
                 if (user == null)
@@ -54,15 +52,14 @@ namespace VNPTBKN.API.Controllers {
                 if (user.flag != 1)
                     return Json(new { message = "locked" });
                 // Roles
-                qry = $"select * from roles where user_id='{user.user_id}'";
-                var roles = await db.Connection.QueryAsync(qry);
+                qry = $"select * from users_roles where user_id='{user.user_id}'";
+                var roles = await db.Connection().QueryAsync(qry);
                 // Token
                 var tokenString = BuildToken(user);
 
                 //Update last login
                 user.last_login = DateTime.Now;
-                await db.Connection.UpdateAsync(user);
-                db.Close();
+                await db.Connection().UpdateAsync(user);
                 return Json(new { data = data, token = tokenString, roles = roles, message = "success" });
             } catch (System.Exception) {
                 return Json(new { message = "danger" });
@@ -80,7 +77,7 @@ namespace VNPTBKN.API.Controllers {
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        [HttpGet, Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpGet]
         public IActionResult Get(string id) {
             try {
                 var _data = "tuanmjnh";

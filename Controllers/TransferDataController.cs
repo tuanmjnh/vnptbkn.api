@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace VNPTBKN.API.Controllers {
     [Route("api/[controller]")]
-    [ApiController] //, Microsoft.AspNetCore.Authorization.Authorize
+    [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
     public class TransferDataController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {

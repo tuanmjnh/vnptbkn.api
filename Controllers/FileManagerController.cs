@@ -12,7 +12,7 @@ using Microsoft.Net.Http.Headers;
 namespace VNPTBKN.API.Controllers {
     // [Produces("application/json")]
     [Route("api/[controller]")]
-    [ApiController] //, Microsoft.AspNetCore.Authorization.Authorize]
+    [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
     public class FileManagerController : Controller {
         string rootPath = "";
         public FileManagerController() {
