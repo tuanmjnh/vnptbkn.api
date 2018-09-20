@@ -17,7 +17,7 @@
    <ItemGroup>
     <ProjectReference Include="..\Authentication.Core\Authentication.Core.csproj" />
     <ProjectReference Include="..\Models.Core\Models.Core.csproj" />
-    <ProjectReference Include="..\..\TM.Core\TM.Core.csproj" />
+    <ProjectReference Include="..\TM.Core\TM.Core.csproj" />
   </ItemGroup>
 
 </Project>
