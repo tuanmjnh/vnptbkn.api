@@ -6,7 +6,7 @@ namespace VNPTBKN.API.Common {
         public static Oracle.ManagedDataAccess.Client.OracleConnection Connection(string connectionString = null) {
             try {
                 if (string.IsNullOrEmpty(connectionString)) {
-                    var db = new TM.Core.Connection.Oracle();
+                    var db = new TM.Core.Connection.Oracle("VNPTBK");
                     return db.Connection;
                 } else {
                     var db = new TM.Core.Connection.Oracle(connectionString);
