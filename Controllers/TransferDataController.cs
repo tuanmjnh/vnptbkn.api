@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using VNPTBKN.API.Common;
 
 namespace VNPTBKN.API.Controllers {
     [Route("api/[controller]")]
@@ -13,6 +14,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpGet]
         public async Task<IActionResult> Get() {
             try {
+                await db.Connection().GetAllAsync<Authentication.Core.Users>();
                 return Json(new { success = "Lấy dữ liệu thành công!" });
             } catch (System.Exception ex) {
                 return Json(new { danger = ex.Message });

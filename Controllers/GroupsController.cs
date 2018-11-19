@@ -25,7 +25,7 @@ namespace VNPTBKN.API.Controllers {
             try {
                 // data.create_by = Helpers.HttpContext.Header();
                 // data.create_date = DateTime.Now;
-                // await db.Connection().InsertAsync<Models.Core.group>(data);
+                await db.Connection().InsertAsync<Models.Core.Groups>(data);
                 return Json(new { data = data, message = new { type = "success", text = "Cập nhật dữ liệu thành công!" } });
             } catch (System.Exception ex) {
                 return Json(new { message = new { type = "danger", text = ex.Message } });
@@ -51,6 +51,7 @@ namespace VNPTBKN.API.Controllers {
                 // db.Connection().Update(_data);
                 // db.Close();
                 // }
+                await db.Connection().GetAllAsync<Models.Core.Groups>();
                 return Json(new { message = new { type = "success", text = "Cập nhật dữ liệu thành công!" } });
             } catch (System.Exception ex) {
                 return Json(new { message = new { type = "danger", text = ex.Message } });
@@ -69,6 +70,7 @@ namespace VNPTBKN.API.Controllers {
                     // }
                 }
                 // if (rs.Count > 0) await db.Connection().UpdateAsync(rs);
+                await db.Connection().GetAllAsync<Models.Core.Groups>();
                 return Json(new { data = rs, message = new { type = "success", text = "Cập nhật dữ liệu thành công!" } });
             } catch (System.Exception ex) {
                 return Json(new { message = new { type = "danger", text = ex.Message } });

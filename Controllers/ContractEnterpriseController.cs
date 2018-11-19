@@ -34,6 +34,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpGet("{id:int}")]
         public async Task<IActionResult> Get(int id) {
             try {
+                await db.Connection().GetAsync<Models.Core.ContractEnterprise>(id);
                 return Json(new { data = id, message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
@@ -47,7 +48,7 @@ namespace VNPTBKN.API.Controllers {
                 data.created_by = TM.Core.HttpContext.Header();
                 data.created_at = DateTime.Now;
                 data.flag = 1;
-                db.Connection().InsertOra(data);
+                await db.Connection().InsertOraAsync(data);
                 return Json(new { data = data, message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
@@ -88,7 +89,7 @@ namespace VNPTBKN.API.Controllers {
                 }
                 if (_data.Count > 0) await db.Connection().UpdateAsync(_data);
                 return Json(new { data = data, message = "success" });
-            } catch (System.Exception ex) { return Json(new { message = "danger" }); }
+            } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
 
         [HttpPut("[action]")]
@@ -102,6 +103,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
+                await db.Connection().GetAsync<Models.Core.ContractEnterprise>(id);
                 return Json(new { data = id, message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
