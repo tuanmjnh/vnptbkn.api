@@ -3,15 +3,17 @@ using Dapper;
 using Dapper.Contrib.Extensions;
 namespace VNPTBKN.API.Common {
     public class db {
-        public static Oracle.ManagedDataAccess.Client.OracleConnection Connection(string connectionString = null) {
+        public static Oracle.ManagedDataAccess.Client.OracleConnection Connection(string connectionString = "VNPTBK") {
             try {
-                if (string.IsNullOrEmpty(connectionString)) {
-                    var db = new TM.Core.Connection.Oracle("VNPTBK");
-                    return db.Connection;
-                } else {
-                    var db = new TM.Core.Connection.Oracle(connectionString);
-                    return db.Connection;
-                }
+                // if (string.IsNullOrEmpty(connectionString)) {
+                //     var db = new TM.Core.Connection.Oracle("VNPTBK");
+                //     return db.Connection;
+                // } else {
+                //     var db = new TM.Core.Connection.Oracle(connectionString);
+                //     return db.Connection;
+                // }
+                var db = new TM.Core.Connection.Oracle(connectionString);
+                return db.Connection;
             } catch (System.Exception) { throw; }
         }
         public static Boolean isExist(string table, string column, string value) {
