@@ -42,7 +42,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Models.Core.ContractCustomer data) {
             try {
-                if (db.isExist("contract_customer", "contract_code", data.contract_code))
+                if (db.isExist("contract_customer", "contract_code", data.ma_gd))
                     return Json(new { message = "exist" });
                 data.contract_customer_id = Guid.NewGuid().ToString();
                 data.created_by = TM.Core.HttpContext.Header();
@@ -102,6 +102,15 @@ namespace VNPTBKN.API.Controllers {
             try {
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
                 return Json(new { data = id, message = "success" });
+            } catch (System.Exception) { return Json(new { message = "danger" }); }
+        }
+
+        [HttpGet("getContract")]
+        public async Task<IActionResult> getContract(string str) {
+            try {
+                var qry = $"select * from CSS_BKN.BKN_HD_THUEBAO where MA_GD='{str}' or MA_TB='{str}' or TEN_KH=N'{str}' or SO_GT='{str}' or SO_DT='{str}'";
+                var data = await db.Connection("DHSX").QueryAsync<Models.Core.BKN_HD_THUEBAO>(qry);
+                return Json(new { data = data, message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
     }
