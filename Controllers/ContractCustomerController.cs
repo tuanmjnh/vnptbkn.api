@@ -62,7 +62,7 @@ namespace VNPTBKN.API.Controllers {
                 //     _data.customer_address = data.customer_address;
                 //     _data.customer_phone = data.customer_phone;
                 //     _data.details = data.details;
-                //     _data.attachs = data.attachs;
+                //     _data.attach = data.attach;
                 //     _data.updated_by = TM.Core.HttpContext.Header();
                 //     _data.updated_at = DateTime.Now;
                 // }

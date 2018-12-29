@@ -67,7 +67,7 @@ namespace VNPTBKN.API.Controllers {
                     _data.price = data.price;
                     _data.details = data.details;
                     _data.contents = data.contents;
-                    _data.attachs = data.attachs;
+                    _data.attach = data.attach;
                     _data.updated_by = TM.Core.HttpContext.Header();
                     _data.updated_at = DateTime.Now;
                 }
