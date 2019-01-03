@@ -121,9 +121,14 @@ namespace VNPTBKN.API.Controllers {
                 qry = $"select * from CSS_BKN.HD_KHACHHANG where hdkh_id in({dataCore[0].hdkh_id})";
                 var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync<Models.Core.HD_KHACHHANG>(qry);
                 // HD_THUEBAO
-                qry = $"select * from CSS_BKN.HD_THUEBAO where hdkh_id in({dataCore[0].hdkh_id})";
-                var thuebao = await db.Connection("DHSX").QueryAsync<Models.Core.HD_THUEBAO>(qry);
-
+                qry = $@"select tb.*,dv.ten_dvql,lhtb.loaihinh_tb,dvvt.ten_dvvt,dttb.ten_dt 
+                         from css_bkn.hd_thuebao tb,admin_bkn.donvi dv,css_bkn.loaihinh_tb lhtb,css_bkn.dichvu_vt dvvt,css_bkn.doituong dttb 
+                         where tb.donvi_id=dv.donvi_id and tb.loaitb_id=lhtb.loaitb_id and tb.dichvuvt_id=dvvt.dichvuvt_id and tb.doituong_id=dttb.doituong_id and hdkh_id in({dataCore[0].hdkh_id})";
+                // var thuebao = await db.Connection("DHSX").QueryAsync<Models.Core.HD_THUEBAO>(qry);
+                var thuebao = await db.Connection("DHSX").QueryAsync(qry);
+                // HD_THUEBAO
+                // qry = $"select * from CSS_BKN.HD_THUEBAO where hdkh_id in({dataCore[0].hdkh_id})";
+                // var xx = await db.Connection("DHSX").QueryAsync(qry);
                 return Json(new { data = new { khachhang = khachhang, thuebao = thuebao }, message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
