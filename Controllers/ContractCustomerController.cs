@@ -40,16 +40,17 @@ namespace VNPTBKN.API.Controllers {
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Models.Core.ContractCustomer data) {
+        public async Task<IActionResult> Post([FromBody] DataMainCustomer data) {
             try {
-                if (db.isExist("contract_customer", "contract_code", data.ma_gd))
-                    return Json(new { message = "exist" });
-                data.contract_customer_id = Guid.NewGuid().ToString();
-                data.created_by = TM.Core.HttpContext.Header();
-                data.created_at = DateTime.Now;
-                data.flag = 1;
-                await db.Connection().InsertOraAsync(data);
-                return Json(new { data = data, message = "success" });
+                // if (db.isExist("contract_customer", "contract_code", data.ma_gd))
+                //     return Json(new { message = "exist" });
+                // data.contract_customer_id = Guid.NewGuid().ToString();
+                // data.created_by = TM.Core.HttpContext.Header();
+                // data.created_at = DateTime.Now;
+                // data.flag = 1;
+                // await db.Connection().InsertOraAsync(data);
+                // return Json(new { data = data, message = "success" });
+                return Json(new { message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
         }
 
@@ -118,10 +119,13 @@ namespace VNPTBKN.API.Controllers {
 
                 if (dataCore.Count() < 1) return Json(new { message = "exist" });
                 // HD_KHACHHANG
-                qry = $"select * from CSS_BKN.HD_KHACHHANG where hdkh_id in({dataCore[0].hdkh_id})";
-                var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync<Models.Core.HD_KHACHHANG>(qry);
+                qry = $@"select kh.*,dv.ten_dv,lhd.ten_loaihd,lkh.ten_loaikh 
+                         from css_bkn.hd_khachhang kh,admin_bkn.donvi dv,css_bkn.loai_hd lhd,css_bkn.loai_kh lkh 
+                         where kh.donvi_id=dv.donvi_id and kh.loaihd_id=lhd.loaihd_id and kh.loaikh_id=lkh.loaikh_id and hdkh_id in({dataCore[0].hdkh_id})";
+                // var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync<Models.Core.HD_KHACHHANG>(qry);
+                var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync(qry);
                 // HD_THUEBAO
-                qry = $@"select tb.*,dv.ten_dvql,lhtb.loaihinh_tb,dvvt.ten_dvvt,dttb.ten_dt 
+                qry = $@"select tb.*,dv.ten_dv,lhtb.loaihinh_tb,dvvt.ten_dvvt,dttb.ten_dt 
                          from css_bkn.hd_thuebao tb,admin_bkn.donvi dv,css_bkn.loaihinh_tb lhtb,css_bkn.dichvu_vt dvvt,css_bkn.doituong dttb 
                          where tb.donvi_id=dv.donvi_id and tb.loaitb_id=lhtb.loaitb_id and tb.dichvuvt_id=dvvt.dichvuvt_id and tb.doituong_id=dttb.doituong_id and hdkh_id in({dataCore[0].hdkh_id})";
                 // var thuebao = await db.Connection("DHSX").QueryAsync<Models.Core.HD_THUEBAO>(qry);
@@ -136,6 +140,10 @@ namespace VNPTBKN.API.Controllers {
             public long hdkh_id { get; set; }
             public long hdtb_id { get; set; }
             public long hdtt_id { get; set; }
+        }
+        public partial class DataMainCustomer {
+            public Models.Core.ContractCustomer khachhang { get; set; }
+            public List<Models.Core.ContractCustomerThueBao> thuebao { get; set; }
         }
     }
 }
