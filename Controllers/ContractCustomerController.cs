@@ -108,10 +108,29 @@ namespace VNPTBKN.API.Controllers {
         [HttpGet("getContract")]
         public async Task<IActionResult> getContract(string str) {
             try {
-                var qry = $"select * from CSS_BKN.BKN_HD_THUEBAO where MA_GD='{str}' or MA_TB='{str}' or TEN_KH=N'{str}' or SO_GT='{str}' or SO_DT='{str}'";
-                var data = await db.Connection("DHSX").QueryAsync<Models.Core.BKN_HD_THUEBAO>(qry);
-                return Json(new { data = data, message = "success" });
+                // var qry = $"select * from CSS_BKN.BKN_HD_THUEBAO where MA_GD='{str}' or MA_TB='{str}' or TEN_KH=N'{str}' or SO_GT='{str}' or SO_DT='{str}'";
+                var qry = $@"select kh.hdkh_id,tb.hdtb_id,tb.hdtt_id 
+                             from CSS_BKN.HD_KHACHHANG kh,CSS_BKN.HD_THUEBAO tb,CSS_BKN.KIEU_LD ld,CSS_BKN.TRANGTHAI_HD tt 
+                             where tb.HDKH_ID=kh.HDKH_ID and tb.KIEULD_ID=ld.KIEULD_ID and tb.TTHD_ID=tt.TTHD_ID and ld.LOAIHD_ID=1 and tt.TTHD_ID=6 
+                             and (kh.MA_GD='{str}' or kh.TEN_KH=N'{str}' or kh.SO_GT='{str}' or kh.SO_DT='{str}' or tb.TEN_TB=N'{str}' or tb.MA_TB='{str}')
+                             order by kh.MA_GD";
+                var dataCore = db.Connection("DHSX").Query<DataCoreCustomer>(qry).ToList();
+
+                if (dataCore.Count() < 1) return Json(new { message = "exist" });
+                // HD_KHACHHANG
+                qry = $"select * from CSS_BKN.HD_KHACHHANG where hdkh_id in({dataCore[0].hdkh_id})";
+                var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync<Models.Core.HD_KHACHHANG>(qry);
+                // HD_THUEBAO
+                qry = $"select * from CSS_BKN.HD_THUEBAO where hdkh_id in({dataCore[0].hdkh_id})";
+                var thuebao = await db.Connection("DHSX").QueryAsync<Models.Core.HD_THUEBAO>(qry);
+
+                return Json(new { data = new { khachhang = khachhang, thuebao = thuebao }, message = "success" });
             } catch (System.Exception) { return Json(new { message = "danger" }); }
+        }
+        public partial class DataCoreCustomer {
+            public long hdkh_id { get; set; }
+            public long hdtb_id { get; set; }
+            public long hdtt_id { get; set; }
         }
     }
 }
