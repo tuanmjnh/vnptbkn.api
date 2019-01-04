@@ -15,8 +15,8 @@ namespace VNPTBKN.API.Controllers {
         public async Task<IActionResult> Get() {
             try {
                 var data = await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
-                return Json(new { data = data, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpGet("[action]/{key}")]
@@ -27,31 +27,51 @@ namespace VNPTBKN.API.Controllers {
                 foreach (var item in tmp) key += $"'{item}',";
                 var qry = $"select * from contract_customer where app_key in({key.Trim(',')}) and flag={query.flag}";
                 var data = await db.Connection().QueryAsync<Models.Core.ContractCustomer>(qry);
-                return Json(new { data = data, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> Get(int id) {
             try {
                 var data = await db.Connection().GetAsync<Models.Core.ContractCustomer>(id);
-                return Json(new { data = id, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = id, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+        }
+
+        [HttpGet("[action]/{key}")]
+        public async Task<IActionResult> getThuebao(string key, [FromQuery] Models.Core.QueryString query) {
+            try {
+                var tmp = key.Trim(',').Split(',');
+                key = "";
+                foreach (var item in tmp) key += $"'{item}',";
+                var qry = $"select * from contract_customer_thuebao where hdkh_id in({key.Trim(',')})";
+                
+                var data = await db.Connection().QueryAsync<Models.Core.ContractCustomerThueBao>(qry);
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DataMainCustomer data) {
             try {
-                // if (db.isExist("contract_customer", "contract_code", data.ma_gd))
-                //     return Json(new { message = "exist" });
-                // data.contract_customer_id = Guid.NewGuid().ToString();
-                // data.created_by = TM.Core.HttpContext.Header();
-                // data.created_at = DateTime.Now;
-                // data.flag = 1;
-                // await db.Connection().InsertOraAsync(data);
-                // return Json(new { data = data, message = "success" });
-                return Json(new { message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                if (db.isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
+                using(var transaction = db.Connection().BeginTransaction()) {
+                    data.khachhang.cc_id = Guid.NewGuid().ToString();
+                    data.khachhang.app_key = "cc_2";
+                    data.khachhang.created_by = TM.Core.HttpContext.Header();
+                    data.khachhang.created_at = DateTime.Now;
+                    data.khachhang.flag = 1;
+                    await db.Connection().InsertOraAsync(data.khachhang, transaction);
+
+                    foreach (Models.Core.ContractCustomerThueBao item in data.thuebao) {
+                        await db.Connection().InsertOraAsync(item, transaction);
+                    }
+                    //
+                    transaction.Commit();
+                    return Json(new { data = data, msg = "success" });
+                }
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut]
@@ -69,8 +89,8 @@ namespace VNPTBKN.API.Controllers {
                 // }
                 // await db.Connection().UpdateAsync(_data);
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
-                return Json(new { data = "_data", message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = "_data", msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut("[action]")]
@@ -86,38 +106,40 @@ namespace VNPTBKN.API.Controllers {
                 // }
                 // if (_data.Count > 0) await db.Connection().UpdateAsync(_data);
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
-                return Json(new { data = "data", message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = "data", msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut("[action]")]
         public async Task<IActionResult> Remove([FromBody] List<Models.Core.ContractCustomer> data) {
             try {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
-                return Json(new { data = data, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
-                return Json(new { data = id, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = id, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getContract")]
-        public async Task<IActionResult> getContract(string str) {
+        [HttpGet("[action]")]
+        public async Task<IActionResult> getContract(string key) {
             try {
-                // var qry = $"select * from CSS_BKN.BKN_HD_THUEBAO where MA_GD='{str}' or MA_TB='{str}' or TEN_KH=N'{str}' or SO_GT='{str}' or SO_DT='{str}'";
+                // var qry = $"select * from CSS_BKN.BKN_HD_THUEBAO where MA_GD='{key}' or MA_TB='{key}' or TEN_KH=N'{key}' or SO_GT='{key}' or SO_DT='{key}'";
                 var qry = $@"select kh.hdkh_id,tb.hdtb_id,tb.hdtt_id 
                              from CSS_BKN.HD_KHACHHANG kh,CSS_BKN.HD_THUEBAO tb,CSS_BKN.KIEU_LD ld,CSS_BKN.TRANGTHAI_HD tt 
                              where tb.HDKH_ID=kh.HDKH_ID and tb.KIEULD_ID=ld.KIEULD_ID and tb.TTHD_ID=tt.TTHD_ID and ld.LOAIHD_ID=1 and tt.TTHD_ID=6 
-                             and (kh.MA_GD='{str}' or kh.TEN_KH=N'{str}' or kh.SO_GT='{str}' or kh.SO_DT='{str}' or tb.TEN_TB=N'{str}' or tb.MA_TB='{str}')
+                             and (kh.MA_GD='{key}' or kh.TEN_KH=N'{key}' or kh.SO_GT='{key}' or kh.SO_DT='{key}' or tb.TEN_TB=N'{key}' or tb.MA_TB='{key}')
                              order by kh.MA_GD";
                 var dataCore = db.Connection("DHSX").Query<DataCoreCustomer>(qry).ToList();
-
-                if (dataCore.Count() < 1) return Json(new { message = "exist" });
+                // notexist
+                if (dataCore.Count() < 1) return Json(new { msg = "notexist" });
+                // exist
+                if (db.isExist("contract_customer", "hdkh_id", dataCore[0].hdkh_id.ToString())) return Json(new { msg = "exist" });
                 // HD_KHACHHANG
                 qry = $@"select kh.*,dv.ten_dv,lhd.ten_loaihd,lkh.ten_loaikh 
                          from css_bkn.hd_khachhang kh,admin_bkn.donvi dv,css_bkn.loai_hd lhd,css_bkn.loai_kh lkh 
@@ -133,8 +155,8 @@ namespace VNPTBKN.API.Controllers {
                 // HD_THUEBAO
                 // qry = $"select * from CSS_BKN.HD_THUEBAO where hdkh_id in({dataCore[0].hdkh_id})";
                 // var xx = await db.Connection("DHSX").QueryAsync(qry);
-                return Json(new { data = new { khachhang = khachhang, thuebao = thuebao }, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { data = new { khachhang = khachhang, thuebao = thuebao }, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
         public partial class DataCoreCustomer {
             public long hdkh_id { get; set; }

@@ -114,10 +114,21 @@ namespace VNPTBKN.API.Controllers {
                         var a = ContentDispositionHeaderValue.Parse(files[i].ContentDisposition);
                         var filename = ContentDispositionHeaderValue.Parse(files[i].ContentDisposition).FileName.ToString().Trim('"');
                         string filename_full = $"{rootPath}/{path}/{filename}";
+                        //
                         using(FileStream fs = System.IO.File.Create(filename_full)) {
                             files[i].CopyTo(fs);
                             fs.Flush();
                         }
+                        //
+                        // if (TM.Core.IO.IsExtension(filename_full, "pdf")) {
+                        //     var _filename_full = filename_full + "x";
+                        //     TM.Core.IO.Rename(filename_full, _filename_full, false);
+                        //     var pdf = new SelectPdf.PdfDocument(_filename_full);
+                        //     pdf.CompressionLevel = SelectPdf.PdfCompressionLevel.Best;
+                        //     pdf.Save(filename_full);
+                        //     pdf.Close();
+                        // }
+                        // 
                         rs.Add(new FileManagerObject {
                             id = Guid.NewGuid().ToString("N").ToUpper(),
                                 name = filename,
