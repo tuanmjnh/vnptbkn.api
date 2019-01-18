@@ -60,7 +60,7 @@ namespace VNPTBKN.API.Controllers {
                 //Update last login
                 user.last_login = DateTime.Now;
                 await db.Connection().UpdateAsync(user);
-                return Json(new { data = data, token = tokenString, roles = roles, message = "success" });
+                return Json(new { data = user, token = tokenString, roles = roles, message = "success" });
             } catch (System.Exception) {
                 return Json(new { message = "danger" });
             }

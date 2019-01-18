@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -46,7 +47,7 @@ namespace VNPTBKN.API.Controllers {
                 key = "";
                 foreach (var item in tmp) key += $"'{item}',";
                 var qry = $"select * from contract_customer_thuebao where hdkh_id in({key.Trim(',')})";
-                
+
                 var data = await db.Connection().QueryAsync<Models.Core.ContractCustomerThueBao>(qry);
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
@@ -55,23 +56,21 @@ namespace VNPTBKN.API.Controllers {
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DataMainCustomer data) {
             try {
-                if (db.isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
-                using(var transaction = db.Connection().BeginTransaction()) {
-                    data.khachhang.cc_id = Guid.NewGuid().ToString();
-                    data.khachhang.app_key = "cc_2";
-                    data.khachhang.created_by = TM.Core.HttpContext.Header();
-                    data.khachhang.created_at = DateTime.Now;
-                    data.khachhang.flag = 1;
-                    await db.Connection().InsertOraAsync(data.khachhang, transaction);
+                if (db.Connection().isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
+                data.khachhang.cc_id = Guid.NewGuid().ToString();
+                data.khachhang.app_key = "cc_2";
+                data.khachhang.created_by = TM.Core.HttpContext.Header();
+                data.khachhang.created_at = DateTime.Now;
+                data.khachhang.flag = 1;
+                await db.Connection().InsertOraAsync(data.khachhang);
 
-                    foreach (Models.Core.ContractCustomerThueBao item in data.thuebao) {
-                        await db.Connection().InsertOraAsync(item, transaction);
-                    }
-                    //
-                    transaction.Commit();
-                    return Json(new { data = data, msg = "success" });
+                foreach (Models.Core.ContractCustomerThueBao item in data.thuebao) {
+                    await db.Connection().InsertOraAsync(item);
                 }
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) {
+                return Json(new { msg = "danger" });
+            }
         }
 
         [HttpPut]
@@ -129,32 +128,18 @@ namespace VNPTBKN.API.Controllers {
         [HttpGet("[action]")]
         public async Task<IActionResult> getContract(string key) {
             try {
-                // var qry = $"select * from CSS_BKN.BKN_HD_THUEBAO where MA_GD='{key}' or MA_TB='{key}' or TEN_KH=N'{key}' or SO_GT='{key}' or SO_DT='{key}'";
-                var qry = $@"select kh.hdkh_id,tb.hdtb_id,tb.hdtt_id 
-                             from CSS_BKN.HD_KHACHHANG kh,CSS_BKN.HD_THUEBAO tb,CSS_BKN.KIEU_LD ld,CSS_BKN.TRANGTHAI_HD tt 
-                             where tb.HDKH_ID=kh.HDKH_ID and tb.KIEULD_ID=ld.KIEULD_ID and tb.TTHD_ID=tt.TTHD_ID and ld.LOAIHD_ID=1 and tt.TTHD_ID=6 
-                             and (kh.MA_GD='{key}' or kh.TEN_KH=N'{key}' or kh.SO_GT='{key}' or kh.SO_DT='{key}' or tb.TEN_TB=N'{key}' or tb.MA_TB='{key}')
-                             order by kh.MA_GD";
-                var dataCore = db.Connection("DHSX").Query<DataCoreCustomer>(qry).ToList();
-                // notexist
-                if (dataCore.Count() < 1) return Json(new { msg = "notexist" });
-                // exist
-                if (db.isExist("contract_customer", "hdkh_id", dataCore[0].hdkh_id.ToString())) return Json(new { msg = "exist" });
                 // HD_KHACHHANG
-                qry = $@"select kh.*,dv.ten_dv,lhd.ten_loaihd,lkh.ten_loaikh 
-                         from css_bkn.hd_khachhang kh,admin_bkn.donvi dv,css_bkn.loai_hd lhd,css_bkn.loai_kh lkh 
-                         where kh.donvi_id=dv.donvi_id and kh.loaihd_id=lhd.loaihd_id and kh.loaikh_id=lkh.loaikh_id and hdkh_id in({dataCore[0].hdkh_id})";
-                // var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync<Models.Core.HD_KHACHHANG>(qry);
-                var khachhang = await db.Connection("DHSX").QueryFirstOrDefaultAsync(qry);
+                var param = new Dapper.Oracle.OracleDynamicParameters("returns");
+                param.Add("v_key", key);
+                param.Add("v_loaihd_id", 1);
+                param.Add("v_tthd_id", 6);
+                var khachhang = db.Connection().QueryFirstOrDefault<Models.Core.HD_KHACHHANG>("GET_DB_HD_KH", param, commandType : System.Data.CommandType.StoredProcedure);
+                // exist
+                if (db.Connection().isExist("contract_customer", "hdkh_id", khachhang.hdkh_id.ToString())) return Json(new { msg = "exist" });
                 // HD_THUEBAO
-                qry = $@"select tb.*,dv.ten_dv,lhtb.loaihinh_tb,dvvt.ten_dvvt,dttb.ten_dt 
-                         from css_bkn.hd_thuebao tb,admin_bkn.donvi dv,css_bkn.loaihinh_tb lhtb,css_bkn.dichvu_vt dvvt,css_bkn.doituong dttb 
-                         where tb.donvi_id=dv.donvi_id and tb.loaitb_id=lhtb.loaitb_id and tb.dichvuvt_id=dvvt.dichvuvt_id and tb.doituong_id=dttb.doituong_id and hdkh_id in({dataCore[0].hdkh_id})";
-                // var thuebao = await db.Connection("DHSX").QueryAsync<Models.Core.HD_THUEBAO>(qry);
-                var thuebao = await db.Connection("DHSX").QueryAsync(qry);
-                // HD_THUEBAO
-                // qry = $"select * from CSS_BKN.HD_THUEBAO where hdkh_id in({dataCore[0].hdkh_id})";
-                // var xx = await db.Connection("DHSX").QueryAsync(qry);
+                param = new Dapper.Oracle.OracleDynamicParameters("returns");
+                param.Add("v_hdkh_id", khachhang.hdkh_id);
+                var thuebao = await db.Connection().QueryAsync<Models.Core.HD_THUEBAO>("GET_DB_HD_TB", param, commandType : System.Data.CommandType.StoredProcedure);
                 return Json(new { data = new { khachhang = khachhang, thuebao = thuebao }, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }

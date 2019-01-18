@@ -30,7 +30,7 @@ namespace VNPTBKN.API.Controllers {
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Authentication.Core.Users data) {
       try {
-        if (db.isExist("users", "username", data.username))
+        if (db.Connection().isExist("users", "username", data.username))
           return Json(new { message = "exist" });
         data.user_id = Guid.NewGuid().ToString("N");
         data.created_by = TM.Core.HttpContext.Header();

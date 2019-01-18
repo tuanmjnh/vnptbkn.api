@@ -42,7 +42,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Models.Core.ContractEnterprise data) {
             try {
-                if (db.isExist("contract_enterprise", "contract_code", data.contract_code))
+                if (db.Connection().isExist("contract_enterprise", "contract_code", data.contract_code))
                     return Json(new { message = "exist" });
                 data.contract_enterprise_id = Guid.NewGuid().ToString();
                 data.created_by = TM.Core.HttpContext.Header();

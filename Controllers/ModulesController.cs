@@ -43,7 +43,7 @@ namespace VNPTBKN.API.Controllers {
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Authentication.Core.Modules data) {
       try {
-        if (db.isExist("modules", "app_key", data.app_key))
+        if (db.Connection().isExist("modules", "app_key", data.app_key))
           return Json(new { message = "exist" });
         data.created_by = TM.Core.HttpContext.Header();
         data.created_at = DateTime.Now;
