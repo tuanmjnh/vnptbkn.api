@@ -54,15 +54,16 @@ namespace VNPTBKN.API.Controllers {
         [HttpPut]
         public async Task<IActionResult> Put([FromBody] Models.Core.Groups data) {
             try {
-                var _data = await db.Connection().GetAsync<Models.Core.Groups>(data.group_id);
+                var _data = await db.Connection().GetAsync<Models.Core.Groups>(data.id);
                 if (_data != null) {
                     _data.title = data.title;
-                    _data.descriptions = data.descriptions;
+                    _data.descs = data.descs;
+                    _data.contents = data.contents;
                     _data.parent_id = data.parent_id;
-                    _data.parents_id = data.parents_id;
+                    _data.parents = data.parents;
                     _data.levels = data.levels;
-                    _data.images = data.images;
-                    _data.icons = data.icons;
+                    _data.image = data.image;
+                    _data.icon = data.icon;
                     _data.quantity = data.quantity;
                     _data.positions = data.positions;
                     _data.orders = data.orders;
@@ -79,7 +80,7 @@ namespace VNPTBKN.API.Controllers {
             try {
                 var _data = new List<Models.Core.Groups>();
                 foreach (var item in data) {
-                    var tmp = await db.Connection().GetAsync<Models.Core.Groups>(item.group_id);
+                    var tmp = await db.Connection().GetAsync<Models.Core.Groups>(item.id);
                     if (tmp != null) {
                         tmp.flag = item.flag;
                         _data.Add(tmp);

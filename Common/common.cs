@@ -22,12 +22,17 @@ namespace VNPTBKN.API.Common {
             param.Add("v_table", table);
             param.Add("v_column", column);
             param.Add("v_value", value);
-            var data = (decimal) db.Connection().ExecuteScalar("CHECK_EXIST", param, commandType : System.Data.CommandType.StoredProcedure);
+            var data = (decimal) con.ExecuteScalar("CHECK_EXIST", param, commandType : System.Data.CommandType.StoredProcedure);
             //var qry = $"select * from {table} where {column}=:value";
             //var data = Connection().QueryFirstOrDefault(qry, new { value = value });
             //if (data != null) return true;
             if (data > 0) return true;
             return false;
+        }
+        public static long getID(this OracleConnection con, string table, string key = "id") {
+            var qry = $"select max({key}) {key} from {table}";
+            var rs = (decimal) con.ExecuteScalar(qry);
+            return Convert.ToInt64(rs);
         }
     }
 }

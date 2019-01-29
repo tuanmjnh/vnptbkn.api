@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 namespace VNPTBKN.API.Controllers {
     // [Produces("application/json")]
-    [Route("api/[controller]")]
+    [Route("api/filemanager")]
     [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
     public class FileManagerController : Controller {
         string rootPath = "";

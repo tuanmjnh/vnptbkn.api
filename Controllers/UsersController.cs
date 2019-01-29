@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 
 namespace VNPTBKN.API.Controllers {
-  [Route("api/[controller]")]
+  [Route("api/users")]
   [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
   public class UsersController : Controller {
     [HttpGet]
@@ -50,7 +50,7 @@ namespace VNPTBKN.API.Controllers {
           _data.mobile = data.mobile;
           _data.email = data.email;
           _data.address = data.address;
-          _data.details = data.details;
+          _data.descs = data.descs;
           _data.images = data.images;
           _data.orders = data.orders;
           _data.updated_by = TM.Core.HttpContext.Header();

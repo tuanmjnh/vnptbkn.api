@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
-    [Route("api/contract-customer")]
+    [Route("api/roles")]
     [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-    public class ContractCustomerController : Controller {
+    public class RolesController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {
             try {
@@ -56,17 +56,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DataMainCustomer data) {
             try {
-                //if (db.Connection().isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
-                //data.khachhang.cc_id = Guid.NewGuid().ToString();
-                //data.khachhang.app_key = "cc_2";
-                data.khachhang.created_by = TM.Core.HttpContext.Header();
-                data.khachhang.created_at = DateTime.Now;
-                data.khachhang.flag = 1;
-                await db.Connection().InsertOraAsync(data.khachhang);
-
-                foreach (Models.Core.ContractCustomerThueBao item in data.thuebao) {
-                    await db.Connection().InsertOraAsync(item);
-                }
+                
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) {
                 return Json(new { msg = "danger" });
