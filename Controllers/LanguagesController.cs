@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
     [Route("api/languages")]
-    [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
+    [ApiController]
     public class LanguagesController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {
@@ -26,7 +26,7 @@ namespace VNPTBKN.API.Controllers {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
                 foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from Languages where app_key in({key.Trim(',')}) and flag={query.flag}";
+                var qry = $"select * from Languages where lower(code) in({key.Trim(',').ToLower()}) and flag={query.flag}";
                 var data = await db.Connection().QueryAsync<Models.Core.Languages>(qry);
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
@@ -49,7 +49,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPost]
+        [HttpPost, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Post([FromBody] Models.Core.Languages data) {
             try {
                 if (db.Connection().isExist("languages", "code", data.code)) return Json(new { msg = "exist" });
@@ -64,7 +64,7 @@ namespace VNPTBKN.API.Controllers {
             }
         }
 
-        [HttpPut]
+        [HttpPut, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Put([FromBody] Models.Core.Languages data) {
             try {
                 var _data = await db.Connection().GetAsync<Models.Core.Languages>(data.id);
@@ -84,7 +84,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("delete")]
+        [HttpPut("delete"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
                 var qry = "";
@@ -95,7 +95,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("[action]")]
+        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Remove([FromBody] List<Models.Core.Languages> data) {
             try {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
@@ -103,7 +103,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
                 await db.Connection().GetAllAsync<Models.Core.Languages>();

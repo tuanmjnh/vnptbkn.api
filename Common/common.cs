@@ -30,8 +30,9 @@ namespace VNPTBKN.API.Common {
             return false;
         }
         public static long getID(this OracleConnection con, string table, string key = "id") {
-            var qry = $"select max({key}) {key} from {table}";
-            var rs = (decimal) con.ExecuteScalar(qry);
+            var qry = $"select max({key})+1 {key} from {table}";
+            var rs = con.ExecuteScalar(qry);
+            if (rs == null) return 1;
             return Convert.ToInt64(rs);
         }
     }
