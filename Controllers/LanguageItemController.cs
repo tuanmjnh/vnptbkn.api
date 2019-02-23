@@ -26,7 +26,7 @@ namespace VNPTBKN.API.Controllers {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
                 foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from Language_items where lower(lang_code) in({key.Trim(',').ToLower()})";
+                var qry = $"select * from Language_items where lower(lang_code) in({key.Trim(',').ToLower()}) order by lang_code,module_code,key";
                 var data = await db.Connection().QueryAsync<Models.Core.LanguageItems>(qry);
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
@@ -67,14 +67,19 @@ namespace VNPTBKN.API.Controllers {
         [HttpPost, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Post([FromBody] Models.Core.LanguageItems data) {
             try {
-                // var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
-                var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}'";
+                var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
+                // var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}'";
                 var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.LanguageItems>(qry);
                 if (_data != null) {
-                    _data.lang_data = data.lang_data;
+                    _data.module_code = data.module_code;
+                    _data.key = data.key;
+                    _data.value = data.value;
+                    //_data.lang_data = data.lang_data;
                     await db.Connection().UpdateAsync(_data);
-                } else
+                } else {
+                    data.id = db.Connection().getID("Language_items");
                     await db.Connection().InsertOraAsync(data);
+                }
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) {
                 return Json(new { msg = "danger" });
@@ -84,13 +89,18 @@ namespace VNPTBKN.API.Controllers {
         [HttpPut, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Put([FromBody] Models.Core.LanguageItems data) {
             try {
-                // var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
-                var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}'";
+                var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
+                // var qry = $"select * from Language_items where lower(lang_code)='{data.lang_code.ToLower()}'";
                 var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.LanguageItems>(qry);
+                if (_data == null)
+                    _data = await db.Connection().GetAsync<Models.Core.LanguageItems>(data.id);
                 if (_data != null) {
-                    _data.lang_data = data.lang_data;
+                    _data.module_code = data.module_code;
+                    _data.key = data.key;
+                    _data.value = data.value;
+                    // _data.lang_data = data.lang_data;
                     await db.Connection().UpdateAsync(_data);
-                }
+                } else await db.Connection().InsertOraAsync(data);
                 return Json(new { data = _data, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
@@ -100,7 +110,7 @@ namespace VNPTBKN.API.Controllers {
             try {
                 var qry = "";
                 foreach (var item in data)
-                    qry += $"delete Language_items where id='{item.lang_code}'";
+                    qry += $"delete Language_items where id={item.id}";
                 await db.Connection().QueryAsync(qry);
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
