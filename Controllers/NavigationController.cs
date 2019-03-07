@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
-    [Route("api/modules")]
+    [Route("api/navigation")]
     [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-    public class ModulesController : Controller {
+    public class NavigationController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {
             try {
-                var data = await db.Connection().GetAllAsync<Models.Core.Modules>();
+                var data = await db.Connection().GetAllAsync<Models.Core.Navigation>();
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
@@ -26,8 +26,8 @@ namespace VNPTBKN.API.Controllers {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
                 foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from Modules where app_key in({key.Trim(',')}) and flag={query.flag}";
-                var data = await db.Connection().QueryAsync<Models.Core.Modules>(qry);
+                var qry = $"select * from Navigation where app_key in({key.Trim(',')}) and flag={query.flag}";
+                var data = await db.Connection().QueryAsync<Models.Core.Navigation>(qry);
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
@@ -35,25 +35,14 @@ namespace VNPTBKN.API.Controllers {
         [HttpGet("{id:int}")]
         public async Task<IActionResult> Get(int id) {
             try {
-                var data = await db.Connection().GetAsync<Models.Core.Modules>(id);
+                var data = await db.Connection().GetAsync<Models.Core.Navigation>(id);
                 return Json(new { data = id, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("ExistCode/{code}")]
-        public IActionResult ExistCode(string code) {
-            try {
-                if (db.Connection().isExist("Modules", "code", code))
-                    return Json(new { msg = "exist" });
-                return Json(new { msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
-        }
-
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Models.Core.Modules data) {
+        public async Task<IActionResult> Post([FromBody] Models.Core.Navigation data) {
             try {
-                if (db.Connection().isExist("Modules", "code", data.code)) return Json(new { msg = "exist" });
-                data.id = Guid.NewGuid().ToString("N");
                 data.created_by = TM.Core.HttpContext.Header();
                 data.created_at = DateTime.Now;
                 data.flag = 1;
@@ -65,19 +54,20 @@ namespace VNPTBKN.API.Controllers {
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] Models.Core.Modules data) {
+        public async Task<IActionResult> Put([FromBody] Models.Core.Navigation data) {
             try {
-                var _data = await db.Connection().GetAsync<Models.Core.Modules>(data.id);
+                var _data = await db.Connection().GetAsync<Models.Core.Navigation>(data.id);
                 if (_data != null) {
-                    _data.code = data.code;
+                    _data.dependent = data.dependent;
+                    // _data.parent_id = data.parent_id;
+                    // _data.parents = data.parents;
+                    _data.levels = data.levels;
                     _data.title = data.title;
                     _data.icon = data.icon;
                     _data.image = data.image;
                     _data.url = data.url;
-                    _data.permissions = data.permissions;
                     _data.orders = data.orders;
                     _data.descs = data.descs;
-                    _data.contents = data.contents;
                     _data.updated_by = TM.Core.HttpContext.Header();
                     _data.updated_at = DateTime.Now;
                     _data.flag = data.flag;
@@ -92,14 +82,14 @@ namespace VNPTBKN.API.Controllers {
             try {
                 var qry = "";
                 foreach (var item in data)
-                    qry += $"update Modules set flag={item.flag} where id='{item.id}'";
+                    qry += $"update Navigation set flag={item.flag} where id='{item.id}'";
                 await db.Connection().QueryAsync(qry);
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut("[action]")]
-        public async Task<IActionResult> Remove([FromBody] List<Models.Core.Modules> data) {
+        public async Task<IActionResult> Remove([FromBody] List<Models.Core.Navigation> data) {
             try {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
                 return Json(new { data = data, msg = "success" });
@@ -109,7 +99,7 @@ namespace VNPTBKN.API.Controllers {
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
-                await db.Connection().GetAllAsync<Models.Core.Modules>();
+                await db.Connection().GetAllAsync<Models.Core.Navigation>();
                 return Json(new { data = id, msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
