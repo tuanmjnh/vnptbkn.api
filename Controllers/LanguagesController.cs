@@ -56,7 +56,6 @@ namespace VNPTBKN.API.Controllers {
                 data.id = Guid.NewGuid().ToString("N");
                 data.created_by = TM.Core.HttpContext.Header();
                 data.created_at = DateTime.Now;
-                data.flag = 1;
                 await db.Connection().InsertOraAsync(data);
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) {

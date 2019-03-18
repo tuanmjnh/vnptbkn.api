@@ -56,7 +56,6 @@ namespace VNPTBKN.API.Controllers {
                 data.id = Guid.NewGuid().ToString("N");
                 data.created_by = TM.Core.HttpContext.Header();
                 data.created_at = DateTime.Now;
-                data.flag = 1;
                 await db.Connection().InsertOraAsync(data);
                 return Json(new { data = data, msg = "success" });
             } catch (System.Exception) {
@@ -69,7 +68,7 @@ namespace VNPTBKN.API.Controllers {
             try {
                 var _data = await db.Connection().GetAsync<Models.Core.Modules>(data.id);
                 if (_data != null) {
-                    _data.code = data.code;
+                    //_data.code = data.code;
                     _data.title = data.title;
                     _data.icon = data.icon;
                     _data.image = data.image;

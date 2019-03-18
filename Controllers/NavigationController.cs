@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
     [Route("api/navigation")]
-    [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
+    [ApiController]
     public class NavigationController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {
@@ -40,6 +40,15 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
+        [HttpGet("ExistCode/{code}")]
+        public IActionResult ExistCode(string code) {
+            try {
+                if (db.Connection().isExist("Navigation", "code", code))
+                    return Json(new { msg = "exist" });
+                return Json(new { msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+        }
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Models.Core.Navigation data) {
             try {
@@ -58,15 +67,17 @@ namespace VNPTBKN.API.Controllers {
             try {
                 var _data = await db.Connection().GetAsync<Models.Core.Navigation>(data.id);
                 if (_data != null) {
+                    _data.app_key = data.app_key;
                     _data.dependent = data.dependent;
-                    // _data.parent_id = data.parent_id;
-                    // _data.parents = data.parents;
                     _data.levels = data.levels;
                     _data.title = data.title;
                     _data.icon = data.icon;
                     _data.image = data.image;
                     _data.url = data.url;
-                    _data.orders = data.orders;
+                    _data.url_plus = data.url_plus;
+                    _data.push = data.push;
+                    _data.go = data.go;
+                    _data.store = data.store;
                     _data.descs = data.descs;
                     _data.updated_by = TM.Core.HttpContext.Header();
                     _data.updated_at = DateTime.Now;
