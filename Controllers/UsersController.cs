@@ -64,17 +64,13 @@ namespace VNPTBKN.API.Controllers {
     [HttpPut("[action]")]
     public async Task<IActionResult> Delete([FromBody] List<Authentication.Core.Users> data) {
       try {
-        var _data = new List<Authentication.Core.Users>();
-        foreach (var item in data) {
-          var tmp = await db.Connection().GetAsync<Authentication.Core.Users>(item.user_id);
-          if (tmp != null) {
-            tmp.flag = item.flag;
-            _data.Add(tmp);
-          }
-        }
-        if (_data.Count > 0) await db.Connection().UpdateAsync(_data);
-        return Json(new { data = data, message = "success" });
-      } catch (System.Exception) { return Json(new { message = "danger" }); }
+        var qry = "BEGIN ";
+        foreach (var item in data)
+          qry += $"update Users set flag={item.flag} where id='{item.user_id}';\r\n";
+        qry += "END;";
+        await db.Connection().QueryAsync(qry);
+        return Json(new { msg = "success" });
+      } catch (System.Exception) { return Json(new { msg = "danger" }); }
     }
 
     [HttpPut("[action]")]

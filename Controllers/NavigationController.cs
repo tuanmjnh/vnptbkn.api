@@ -91,9 +91,10 @@ namespace VNPTBKN.API.Controllers {
         [HttpPut("delete")]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
-                var qry = "";
+                var qry = "BEGIN ";
                 foreach (var item in data)
-                    qry += $"update Navigation set flag={item.flag} where id='{item.id}'";
+                    qry += $"update Navigation set flag={item.flag} where id='{item.id}';\r\n";
+                qry += "END;";
                 await db.Connection().QueryAsync(qry);
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
