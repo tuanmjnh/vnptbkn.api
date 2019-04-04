@@ -14,10 +14,10 @@ namespace VNPTBKN.API.Controllers {
     // [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : Controller {
+    public class AuthController_old : Controller {
         private IConfiguration _config;
         private Microsoft.Extensions.Primitives.StringValues authorizationToken;
-        public AuthController(IConfiguration config) {
+        public AuthController_old(IConfiguration config) {
             _config = config;
         }
 
@@ -31,44 +31,41 @@ namespace VNPTBKN.API.Controllers {
         }
 
         [HttpPost, Microsoft.AspNetCore.Authorization.AllowAnonymous]
-        public async Task<IActionResult> Post([FromBody] Authentication.Core.DBNguoidung data) {
+        public async Task<IActionResult> Post([FromBody] Authentication.Core.Users data) {
             try {
                 var Authorization = TM.Core.HttpContext.Http.Request.Headers.TryGetValue("Authorization", out authorizationToken);;
                 var Author = TM.Core.HttpContext.Http.Request.Headers["Author"].ToString();
-                // db_nguoidung
-                var qry = $"select * from db_nguoidung where ma_nd='{data.ma_nd}'";
-                data = await db.Connection().QueryFirstOrDefaultAsync<Authentication.Core.DBNguoidung>(qry);
-                if (data == null) return Json(new { message = "null" });
-                // nguoidung
-                qry = $"select db.*,nd.*,r.roles from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.nguoidung_id={data.nguoidung_id}";
-                var user = await db.Connection().QueryFirstOrDefaultAsync<Authentication.Core.nguoidung_auth>(qry);
-                if (user == null) return Json(new { message = "null" });
+                var qry = $"select * from users where username='{data.username}'";
+                //AuthDB
+                var user = await db.Connection().QueryFirstOrDefaultAsync<Authentication.Core.Users>(qry);
+
+                //Account not Exist
+                if (user == null)
+                    return Json(new { message = "null" });
 
                 //Password wrong
-                // data.matkhau = TM.Core.Encrypt.MD5.CryptoMD5TM(data.matkhau + user.salt);
-                // if (user.matkhau != data.matkhau)
-                //     return Json(new { message = "false" });
+                data.password = TM.Core.Encrypt.MD5.CryptoMD5TM(data.password + user.salt);
+                if (user.password != data.password)
+                    return Json(new { message = "false" });
 
                 //Account is locked
-                if (data.trangthai < 1)
+                if (user.flag != 1)
                     return Json(new { message = "locked" });
                 // Roles
-                // qry = $"select * from user_role where user_id='{user.user_id}'";
-                // var roles = await db.Connection().QueryAsync(qry);
+                qry = $"select * from user_role where user_id='{user.user_id}'";
+                var roles = await db.Connection().QueryAsync(qry);
                 // Token
                 var tokenString = BuildToken(user);
 
                 //Update last login
                 user.last_login = DateTime.Now;
-                qry = $"update ttkd_bkn.nguoidung set last_login={user.last_login.Value.ParseDateTime()}";
-                await db.Connection().QueryAsync(qry);
-                //await db.Connection().UpdateAsync(user);
-                return Json(new { data = user, token = tokenString, message = "success" });
+                await db.Connection().UpdateAsync(user);
+                return Json(new { data = user, token = tokenString, roles = roles, message = "success" });
             } catch (System.Exception) {
                 return Json(new { message = "danger" });
             }
         }
-        private string BuildToken(Authentication.Core.nguoidung_auth user) {
+        private string BuildToken(Authentication.Core.Users user) {
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(

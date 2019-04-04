@@ -93,6 +93,7 @@ namespace VNPTBKN.API.Controllers {
                 foreach (var item in data)
                     qry += $"update Modules set flag={item.flag} where id='{item.id}';\r\n";
                 qry += "END;";
+                await db.Connection().QueryAsync("COMMIT");
                 await db.Connection().QueryAsync(qry);
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }

@@ -52,7 +52,8 @@ namespace VNPTBKN.API.Controllers {
           _data.address = data.address;
           _data.descs = data.descs;
           _data.images = data.images;
-          _data.orders = data.orders;
+          _data.donvi_id = data.donvi_id;
+          _data.roles_id = data.roles_id;
           _data.updated_by = TM.Core.HttpContext.Header();
           _data.updated_at = DateTime.Now;
         }
@@ -69,6 +70,7 @@ namespace VNPTBKN.API.Controllers {
           qry += $"update Users set flag={item.flag} where id='{item.user_id}';\r\n";
         qry += "END;";
         await db.Connection().QueryAsync(qry);
+        await db.Connection().QueryAsync("COMMIT");
         return Json(new { msg = "success" });
       } catch (System.Exception) { return Json(new { msg = "danger" }); }
     }

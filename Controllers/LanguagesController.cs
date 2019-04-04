@@ -91,6 +91,7 @@ namespace VNPTBKN.API.Controllers {
                     qry += $"update Languages set flag={item.flag} where id='{item.id}';\r\n";
                 qry += "END;";
                 await db.Connection().QueryAsync(qry);
+                await db.Connection().QueryAsync("COMMIT");
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }

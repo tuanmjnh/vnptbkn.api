@@ -47,11 +47,13 @@ namespace VNPTBKN.API.Controllers {
                 var _data = await db.Connection().GetAsync<Authentication.Core.Roles>(data.id);
                 if (_data != null) {
                     _data.name = data.name;
+                    _data.roles = data.roles;
                     _data.orders = data.orders;
                     _data.descs = data.descs;
                     _data.updated_by = TM.Core.HttpContext.Header();
                     _data.updated_at = DateTime.Now;
                     _data.flag = data.flag;
+                    _data.color = data.color;
                 }
                 await db.Connection().UpdateAsync(_data);
                 return Json(new { data = _data, msg = "success" });
@@ -66,6 +68,7 @@ namespace VNPTBKN.API.Controllers {
                     qry += $"update roles set flag={item.flag} where id='{item.id}';\r\n";
                 qry += "END;";
                 await db.Connection().QueryAsync(qry);
+                await db.Connection().QueryAsync("COMMIT");
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }

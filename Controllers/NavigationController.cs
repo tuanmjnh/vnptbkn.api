@@ -78,6 +78,7 @@ namespace VNPTBKN.API.Controllers {
                     _data.push = data.push;
                     _data.go = data.go;
                     _data.store = data.store;
+                    _data.orders = data.orders;
                     _data.descs = data.descs;
                     _data.updated_by = TM.Core.HttpContext.Header();
                     _data.updated_at = DateTime.Now;
@@ -96,6 +97,7 @@ namespace VNPTBKN.API.Controllers {
                     qry += $"update Navigation set flag={item.flag} where id='{item.id}';\r\n";
                 qry += "END;";
                 await db.Connection().QueryAsync(qry);
+                await db.Connection().QueryAsync("COMMIT");
                 return Json(new { msg = "success" });
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
