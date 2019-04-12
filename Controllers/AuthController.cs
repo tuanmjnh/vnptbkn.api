@@ -21,7 +21,7 @@ namespace VNPTBKN.API.Controllers {
             _config = config;
         }
 
-        [HttpPost("CheckToken"), Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPost("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult CheckToken() {
             try {
                 return Json(new { message = new { type = "success", text = "Success!" } });

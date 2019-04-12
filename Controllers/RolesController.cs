@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
     [Route("api/roles")]
-    [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
+    [ApiController]
     public class RolesController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {
@@ -28,7 +28,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPost, Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPost]
         public async Task<IActionResult> Post([FromBody] Authentication.Core.Roles data) {
             try {
                 data.id = Guid.NewGuid().ToString("N");
@@ -41,7 +41,7 @@ namespace VNPTBKN.API.Controllers {
             }
         }
 
-        [HttpPut, Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPut]
         public async Task<IActionResult> Put([FromBody] Authentication.Core.Roles data) {
             try {
                 var _data = await db.Connection().GetAsync<Authentication.Core.Roles>(data.id);
@@ -60,7 +60,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("delete"), Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPut("[action]")]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
                 var qry = "BEGIN ";
@@ -73,7 +73,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPut("[action]")]
         public async Task<IActionResult> Remove([FromBody] List<Authentication.Core.Roles> data) {
             try {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
@@ -81,7 +81,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpDelete("{id}"), Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
                 await db.Connection().GetAllAsync<Authentication.Core.Roles>();

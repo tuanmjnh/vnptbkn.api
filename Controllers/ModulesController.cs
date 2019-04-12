@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
     [Route("api/modules")]
-    [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
+    [ApiController]
     public class ModulesController : Controller {
         [HttpGet]
         public async Task<IActionResult> Get() {
@@ -20,8 +20,17 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getkey/{key}")]
-        public async Task<IActionResult> GetKey(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key:int}")]
+        public async Task<IActionResult> GetByFlag(int key) {
+            try {
+                var qry = $"select * from Modules where flag in({key})";
+                var data = await db.Connection().QueryAsync<Models.Core.Modules>(qry);
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+        }
+
+        [HttpGet("[action]/{key}"), Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> GetByKey(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -32,7 +41,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Get(int id) {
             try {
                 var data = await db.Connection().GetAsync<Models.Core.Modules>(id);
@@ -40,7 +49,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("ExistCode/{code}")]
+        [HttpGet("[action]/{code}"), Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult ExistCode(string code) {
             try {
                 if (db.Connection().isExist("Modules", "code", code))
@@ -49,7 +58,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPost]
+        [HttpPost, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Post([FromBody] Models.Core.Modules data) {
             try {
                 if (db.Connection().isExist("Modules", "code", data.code)) return Json(new { msg = "exist" });
@@ -63,15 +72,15 @@ namespace VNPTBKN.API.Controllers {
             }
         }
 
-        [HttpPut]
+        [HttpPut, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Put([FromBody] Models.Core.Modules data) {
             try {
                 var _data = await db.Connection().GetAsync<Models.Core.Modules>(data.id);
                 if (_data != null) {
                     //_data.code = data.code;
                     _data.title = data.title;
-                    _data.icon = data.icon;
-                    _data.image = data.image;
+                    _data.required_auth = data.required_auth;
+                    _data.alias = data.alias;
                     _data.url = data.url;
                     _data.permissions = data.permissions;
                     _data.orders = data.orders;
@@ -86,7 +95,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("delete")]
+        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
                 var qry = "BEGIN ";
@@ -99,7 +108,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("[action]")]
+        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Remove([FromBody] List<Models.Core.Modules> data) {
             try {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
@@ -107,7 +116,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
                 await db.Connection().GetAllAsync<Models.Core.Modules>();

@@ -20,8 +20,8 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getlang/{key}")]
-        public async Task<IActionResult> GetLang(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key}")]
+        public async Task<IActionResult> GetByLanguage(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -32,8 +32,8 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getmodule/{key}")]
-        public async Task<IActionResult> GetModule(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key}"), Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> GetByModule(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -44,8 +44,8 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getkey/{key}")]
-        public async Task<IActionResult> getKey(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key}"), Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> getByKey(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -56,7 +56,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Get(int id) {
             try {
                 var data = await db.Connection().GetAsync<Models.Core.Dictionary>(id);

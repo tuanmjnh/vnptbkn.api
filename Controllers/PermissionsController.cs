@@ -20,8 +20,8 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getkey/{key}")]
-        public async Task<IActionResult> GetKey(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key}")]
+        public async Task<IActionResult> GetByKey(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -40,7 +40,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("ExistCode/{code}")]
+        [HttpGet("[action]/{code}")]
         public IActionResult ExistCode(string code) {
             try {
                 if (db.Connection().isExist("Permissions", "code", code))
@@ -81,7 +81,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("delete")]
+        [HttpPut("[action]")]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
                 var qry = "BEGIN ";

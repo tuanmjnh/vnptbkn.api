@@ -21,7 +21,7 @@ namespace VNPTBKN.API.Controllers {
             _config = config;
         }
 
-        [HttpPost("CheckToken"), Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPost("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult CheckToken() {
             try {
                 return Json(new { message = new { type = "success", text = "Success!" } });
@@ -52,7 +52,7 @@ namespace VNPTBKN.API.Controllers {
                 if (user.flag != 1)
                     return Json(new { message = "locked" });
                 // Roles
-                qry = $"select * from user_role where user_id='{user.user_id}'";
+                qry = $"select * from user_role where user_id='{user.id}'";
                 var roles = await db.Connection().QueryAsync(qry);
                 // Token
                 var tokenString = BuildToken(user);

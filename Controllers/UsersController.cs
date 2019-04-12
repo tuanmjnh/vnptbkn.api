@@ -32,7 +32,7 @@ namespace VNPTBKN.API.Controllers {
       try {
         if (db.Connection().isExist("users", "username", data.username))
           return Json(new { message = "exist" });
-        data.user_id = Guid.NewGuid().ToString("N");
+        data.id = Guid.NewGuid().ToString("N");
         data.created_by = TM.Core.HttpContext.Header();
         data.created_at = DateTime.Now;
         await db.Connection().InsertOraAsync(data);
@@ -43,7 +43,7 @@ namespace VNPTBKN.API.Controllers {
     [HttpPut]
     public async Task<IActionResult> Put([FromBody] Authentication.Core.Users data) {
       try {
-        var _data = await db.Connection().GetAsync<Authentication.Core.Users>(data.user_id);
+        var _data = await db.Connection().GetAsync<Authentication.Core.Users>(data.id);
         if (_data != null) {
           // _data.app_key = data.app_key;
           _data.full_name = data.full_name;
@@ -67,7 +67,7 @@ namespace VNPTBKN.API.Controllers {
       try {
         var qry = "BEGIN ";
         foreach (var item in data)
-          qry += $"update Users set flag={item.flag} where id='{item.user_id}';\r\n";
+          qry += $"update Users set flag={item.flag} where id='{item.id}';\r\n";
         qry += "END;";
         await db.Connection().QueryAsync(qry);
         await db.Connection().QueryAsync("COMMIT");

@@ -58,7 +58,7 @@ namespace VNPTBKN.API.Controllers {
             }
         }
 
-        [HttpPut("delete")]
+        [HttpPut("[action]")]
         public async Task<IActionResult> Delete([FromBody] List<Models.Core.Groups> data) {
             try {
                 var rs = new List<Models.Core.Groups>();
@@ -82,7 +82,7 @@ namespace VNPTBKN.API.Controllers {
 
         }
 
-        [HttpPut("quickedit")]
+        [HttpPut("[action]")]
         public async Task<IActionResult> QuickEdit([FromBody] Models.Core.QuickEdit data) {
             try {
                 var qry = $"UPDATE Groups SET {data.column}=N'{data.value}' WHERE id='{data.id}'";

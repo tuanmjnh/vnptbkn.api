@@ -29,7 +29,7 @@ namespace VNPTBKN.API.Controllers {
                 var qry = $"SELECT * FROM {dataVal}";
                 var table = await SQLServer.Connection.QueryAsync<Authentication.Core.Users>(qry);
                 foreach (var i in table) {
-                    i.user_id = i.user_id.ToUpper();
+                    i.id = i.id.ToUpper();
                     i.full_name = string.IsNullOrEmpty(i.full_name) ? i.full_name : i.full_name;
                     i.created_by = string.IsNullOrEmpty(i.created_by) ? "Admin" : i.created_by;
                     i.created_at = i.created_at.HasValue ? i.created_at.Value : DateTime.Now;

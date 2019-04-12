@@ -20,8 +20,17 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getkey/{key}")]
-        public async Task<IActionResult> GetKey(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key:int}")]
+        public async Task<IActionResult> GetByFlag(int key) {
+            try {
+                var qry = $"select * from Navigation where flag in({key})";
+                var data = await db.Connection().QueryAsync<Models.Core.Navigation>(qry);
+                return Json(new { data = data, msg = "success" });
+            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+        }
+
+        [HttpGet("[action]/{key}"), Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> GetByKey(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -32,7 +41,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Get(int id) {
             try {
                 var data = await db.Connection().GetAsync<Models.Core.Navigation>(id);
@@ -40,7 +49,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("ExistCode/{code}")]
+        [HttpGet("[action]/{code}"), Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult ExistCode(string code) {
             try {
                 if (db.Connection().isExist("Navigation", "code", code))
@@ -49,7 +58,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPost]
+        [HttpPost, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Post([FromBody] Models.Core.Navigation data) {
             try {
                 data.created_by = TM.Core.HttpContext.Header();
@@ -62,7 +71,7 @@ namespace VNPTBKN.API.Controllers {
             }
         }
 
-        [HttpPut]
+        [HttpPut, Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Put([FromBody] Models.Core.Navigation data) {
             try {
                 var _data = await db.Connection().GetAsync<Models.Core.Navigation>(data.id);
@@ -89,7 +98,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("delete")]
+        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
                 var qry = "BEGIN ";
@@ -102,7 +111,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("[action]")]
+        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Remove([FromBody] List<Models.Core.Navigation> data) {
             try {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
@@ -110,7 +119,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> RemoveOne(int id) {
             try {
                 await db.Connection().GetAllAsync<Models.Core.Navigation>();

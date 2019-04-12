@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 
 namespace VNPTBKN.API.Controllers {
-  [Route("api/dbdonvi")]
+  [Route("api/donvi")]
   [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
   public class DBDonviController : Controller {
     [HttpGet]

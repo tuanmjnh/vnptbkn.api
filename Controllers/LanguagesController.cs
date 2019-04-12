@@ -20,8 +20,8 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("getkey/{key}")]
-        public async Task<IActionResult> GetKey(string key, [FromQuery] Models.Core.QueryString query) {
+        [HttpGet("[action]/{key}"), Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> GetByKey(string key, [FromQuery] Models.Core.QueryString query) {
             try {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
@@ -32,7 +32,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id:int}"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Get(int id) {
             try {
                 var data = await db.Connection().GetAsync<Models.Core.Languages>(id);
@@ -40,7 +40,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpGet("ExistCode/{code}")]
+        [HttpGet("[action]/{code}"), Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult ExistCode(string code) {
             try {
                 if (db.Connection().isExist("languages", "code", code))
@@ -83,7 +83,7 @@ namespace VNPTBKN.API.Controllers {
             } catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
-        [HttpPut("delete"), Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPut("[action]"), Microsoft.AspNetCore.Authorization.Authorize]
         public async Task<IActionResult> Delete([FromBody] List<dynamic> data) {
             try {
                 var qry = "BEGIN ";
