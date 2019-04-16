@@ -8,74 +8,108 @@ using Dapper.Contrib.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
-namespace VNPTBKN.API.Controllers {
+namespace VNPTBKN.API.Controllers
+{
     [Route("api/contract-customer")]
     [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-    public class ContractCustomerController : Controller {
+    public class ContractCustomerController : Controller
+    {
         [HttpGet]
-        public async Task<IActionResult> Get() {
-            try {
-                var data = await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
+        public async Task<IActionResult> Get()
+        {
+            try
+            {
+                var qry = $"select * from CONTRACT_CUSTOMER_KH";
+                var data = await db.Connection().QueryAsync<ContractCustomerKH>(qry);
                 return Json(new { data = data, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
-
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetByDonVi()
+        {
+            try
+            {
+                var qry = $"select * from CONTRACT_CUSTOMER_KH";
+                var data = await db.Connection().QueryAsync<ContractCustomerKH>(qry);
+                return Json(new { data = data, msg = "success" });
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
+        }
         [HttpGet("[action]/{key}")]
-        public async Task<IActionResult> GetByKey(string key, [FromQuery] Models.Core.QueryString query) {
-            try {
+        public async Task<IActionResult> GetByKey(string key, [FromQuery] Models.Core.QueryString query)
+        {
+            try
+            {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
                 foreach (var item in tmp) key += $"'{item}',";
                 var qry = $"select * from contract_customer where app_key in({key.Trim(',')}) and flag={query.flag}";
                 var data = await db.Connection().QueryAsync<Models.Core.ContractCustomer>(qry);
                 return Json(new { data = data, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> Get(int id) {
-            try {
+        public async Task<IActionResult> Get(int id)
+        {
+            try
+            {
                 var data = await db.Connection().GetAsync<Models.Core.ContractCustomer>(id);
                 return Json(new { data = id, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpGet("[action]/{key}")]
-        public async Task<IActionResult> getThuebao(string key, [FromQuery] Models.Core.QueryString query) {
-            try {
+        public async Task<IActionResult> getThuebao(string key, [FromQuery] Models.Core.QueryString query)
+        {
+            try
+            {
                 var tmp = key.Trim(',').Split(',');
                 key = "";
-                foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from contract_customer_thuebao where hdkh_id in({key.Trim(',')})";
-
-                var data = await db.Connection().QueryAsync<Models.Core.ContractCustomerThueBao>(qry);
+                foreach (var item in tmp) key += $"{item},";
+                var qry = $"select * from CONTRACT_CUSTOMER_TB where hdkh_id in({key.Trim(',')})";
+                var data = await db.Connection().QueryAsync<Models.Core.HD_THUEBAO>(qry);
                 return Json(new { data = data, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] DataMainCustomer data) {
-            try {
+        public async Task<IActionResult> Post([FromBody] Models.Core.ContractCustomer data)
+        {
+            try
+            {
                 //if (db.Connection().isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
                 //data.khachhang.cc_id = Guid.NewGuid().ToString();
                 //data.khachhang.app_key = "cc_2";
-                data.khachhang.created_by = TM.Core.HttpContext.Header();
-                data.khachhang.created_at = DateTime.Now;
-                data.khachhang.flag = 1;
-                await db.Connection().InsertOraAsync(data.khachhang);
+                data.id = Guid.NewGuid().ToString("N");
+                data.created_by = TM.Core.HttpContext.Header();
+                data.created_at = DateTime.Now;
+                data.flag = 1;
+                await db.Connection().InsertOraAsync(data);
 
-                foreach (Models.Core.ContractCustomerThueBao item in data.thuebao) {
-                    await db.Connection().InsertOraAsync(item);
-                }
-                return Json(new { data = data, msg = "success" });
-            } catch (System.Exception) {
+                // foreach (Models.Core.ContractCustomerThueBao item in data.thuebao)
+                // {
+                //     await db.Connection().InsertOraAsync(item);
+                // }
+                var qry = $"select * from CONTRACT_CUSTOMER_KH where hdkh_id={data.hdkh_id}";
+                var rs = db.Connection().QueryFirstOrDefault<ContractCustomerKH>(qry);
+                return Json(new { data = rs, msg = "success" });
+            }
+            catch (System.Exception)
+            {
                 return Json(new { msg = "danger" });
             }
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] Models.Core.ContractCustomer data) {
-            try {
+        public async Task<IActionResult> Put([FromBody] Models.Core.ContractCustomer data)
+        {
+            try
+            {
                 // var _data = await db.Connection().GetAsync<Models.Core.ContractCustomer>(data.group_id);
                 // if (_data != null) {
                 //     _data.customer_name = data.customer_name;
@@ -89,12 +123,15 @@ namespace VNPTBKN.API.Controllers {
                 // await db.Connection().UpdateAsync(_data);
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
                 return Json(new { data = "_data", msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut("[action]")]
-        public async Task<IActionResult> Delete([FromBody] List<Models.Core.ContractCustomer> data) {
-            try {
+        public async Task<IActionResult> Delete([FromBody] List<Models.Core.ContractCustomer> data)
+        {
+            try
+            {
                 // var _data = new List<Models.Core.ContractCustomer>();
                 // foreach (var item in data) {
                 //     var tmp = await db.Connection().GetAsync<Models.Core.ContractCustomer>(item.group_id);
@@ -106,51 +143,75 @@ namespace VNPTBKN.API.Controllers {
                 // if (_data.Count > 0) await db.Connection().UpdateAsync(_data);
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
                 return Json(new { data = "data", msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut("[action]")]
-        public async Task<IActionResult> Remove([FromBody] List<Models.Core.ContractCustomer> data) {
-            try {
+        public async Task<IActionResult> Remove([FromBody] List<Models.Core.ContractCustomer> data)
+        {
+            try
+            {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
                 return Json(new { data = data, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> RemoveOne(int id) {
-            try {
+        public async Task<IActionResult> RemoveOne(int id)
+        {
+            try
+            {
                 await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
                 return Json(new { data = id, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpGet("[action]")]
-        public async Task<IActionResult> getContract(string key) {
-            try {
+        public async Task<IActionResult> getContract(string key)
+        {
+            try
+            {
                 // HD_KHACHHANG
                 var param = new Dapper.Oracle.OracleDynamicParameters("returns");
                 param.Add("v_key", key);
                 param.Add("v_loaihd_id", 1);
                 param.Add("v_tthd_id", 6);
-                var khachhang = db.Connection().QueryFirstOrDefault<Models.Core.HD_KHACHHANG>("GET_DB_HD_KH", param, commandType : System.Data.CommandType.StoredProcedure);
+                var khachhang = db.Connection().QueryFirstOrDefault<Models.Core.HD_KHACHHANG>("GET_DB_HD_KH", param, commandType: System.Data.CommandType.StoredProcedure);
+                // not exist
+                if (khachhang == null) return Json(new { msg = "not_exist" });
                 // exist
                 if (db.Connection().isExist("contract_customer", "hdkh_id", khachhang.hdkh_id.ToString())) return Json(new { msg = "exist" });
                 // HD_THUEBAO
                 param = new Dapper.Oracle.OracleDynamicParameters("returns");
                 param.Add("v_hdkh_id", khachhang.hdkh_id);
-                var thuebao = await db.Connection().QueryAsync<Models.Core.HD_THUEBAO>("GET_DB_HD_TB", param, commandType : System.Data.CommandType.StoredProcedure);
+                var thuebao = await db.Connection().QueryAsync<Models.Core.HD_THUEBAO>("GET_DB_HD_TB", param, commandType: System.Data.CommandType.StoredProcedure);
+                // not exist
+                if (thuebao == null) return Json(new { msg = "not_exist" });
                 return Json(new { data = new { khachhang = khachhang, thuebao = thuebao }, msg = "success" });
-            } catch (System.Exception) { return Json(new { msg = "danger" }); }
+            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
-        public partial class DataCoreCustomer {
+        public partial class DataCoreCustomer
+        {
             public long hdkh_id { get; set; }
             public long hdtb_id { get; set; }
             public long hdtt_id { get; set; }
         }
-        public partial class DataMainCustomer {
-            public Models.Core.ContractCustomer khachhang { get; set; }
-            public List<Models.Core.ContractCustomerThueBao> thuebao { get; set; }
+        public partial class ContractCustomerKH : Models.Core.HD_KHACHHANG
+        {
+            public string id { get; set; }
+            public string attach { get; set; }
+            public string descs { get; set; }
+            public string created_by { get; set; }
+            public DateTime? created_at { get; set; }
+            public string updated_by { get; set; }
+            public DateTime? updated_at { get; set; }
+            public string deleted_by { get; set; }
+            public DateTime? deleted_at { get; set; }
+            public int flag { get; set; }
         }
     }
 }
