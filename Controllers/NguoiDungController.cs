@@ -10,7 +10,7 @@ using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
   [Route("api/nguoidung")]
   [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-  public class DBNguoiDungController : Controller {
+  public class NguoiDungController : Controller {
     [HttpGet]
     public async Task<IActionResult> Get() {
       try {

@@ -30,7 +30,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = "error_token" });
                 var qry = $"select * from CONTRACT_CUSTOMER_KH";
+                if (nd.donvi_id > 0)
+                    qry += $" where donvi_id in({nd.donvi_id})";
                 var data = await db.Connection().QueryAsync<ContractCustomerKH>(qry);
                 return Json(new { data = data, msg = "success" });
             }
@@ -82,27 +86,22 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = "error_token" });
                 //if (db.Connection().isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
                 //data.khachhang.cc_id = Guid.NewGuid().ToString();
                 //data.khachhang.app_key = "cc_2";
                 data.id = Guid.NewGuid().ToString("N");
-                data.created_by = TM.Core.HttpContext.Header();
+                data.created_by = nd.ma_nd;
                 data.created_at = DateTime.Now;
                 data.flag = 1;
                 await db.Connection().InsertOraAsync(data);
-
-                // foreach (Models.Core.ContractCustomerThueBao item in data.thuebao)
-                // {
-                //     await db.Connection().InsertOraAsync(item);
-                // }
-                var qry = $"select * from CONTRACT_CUSTOMER_KH where hdkh_id={data.hdkh_id}";
+                // 
+                var qry = $"select * from CONTRACT_CUSTOMER_KH where hdkh_id={data.hdkh_id} and flag=1";
                 var rs = db.Connection().QueryFirstOrDefault<ContractCustomerKH>(qry);
                 return Json(new { data = rs, msg = "success" });
             }
-            catch (System.Exception)
-            {
-                return Json(new { msg = "danger" });
-            }
+            catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
 
         [HttpPut]
@@ -110,39 +109,30 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                // var _data = await db.Connection().GetAsync<Models.Core.ContractCustomer>(data.group_id);
-                // if (_data != null) {
-                //     _data.customer_name = data.customer_name;
-                //     _data.customer_address = data.customer_address;
-                //     _data.customer_phone = data.customer_phone;
-                //     _data.details = data.details;
-                //     _data.attach = data.attach;
-                //     _data.updated_by = TM.Core.HttpContext.Header();
-                //     _data.updated_at = DateTime.Now;
-                // }
-                // await db.Connection().UpdateAsync(_data);
-                await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
-                return Json(new { data = "_data", msg = "success" });
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = "error_token" });
+                data.updated_by = nd.ma_nd;
+                data.updated_at = DateTime.Now;
+                await db.Connection().UpdateAsync(data);
+                return Json(new { data = data, msg = "success" });
             }
             catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
-
         [HttpPut("[action]")]
-        public async Task<IActionResult> Delete([FromBody] List<Models.Core.ContractCustomer> data)
+        public async Task<IActionResult> Delete([FromBody] List<dynamic> data)
         {
             try
             {
-                // var _data = new List<Models.Core.ContractCustomer>();
-                // foreach (var item in data) {
-                //     var tmp = await db.Connection().GetAsync<Models.Core.ContractCustomer>(item.group_id);
-                //     if (tmp != null) {
-                //         tmp.flag = item.flag;
-                //         _data.Add(tmp);
-                //     }
-                // }
-                // if (_data.Count > 0) await db.Connection().UpdateAsync(_data);
-                await db.Connection().GetAllAsync<Models.Core.ContractCustomer>();
-                return Json(new { data = "data", msg = "success" });
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = "error_token" });
+                var now = DateTime.Now;
+                var qry = "BEGIN ";
+                foreach (var item in data)
+                    qry += $"update contract_customer set flag={item.flag},updated_by='{nd.ma_nd}',updated_at={now.ParseDateTime()} where id='{item.id}';\r\n";
+                qry += "END;";
+                await db.Connection().QueryAsync("COMMIT");
+                await db.Connection().QueryAsync(qry);
+                return Json(new { msg = "success" });
             }
             catch (System.Exception) { return Json(new { msg = "danger" }); }
         }
@@ -183,7 +173,7 @@ namespace VNPTBKN.API.Controllers
                 // not exist
                 if (khachhang == null) return Json(new { msg = "not_exist" });
                 // exist
-                if (db.Connection().isExist("contract_customer", "hdkh_id", khachhang.hdkh_id.ToString())) return Json(new { msg = "exist" });
+                if (db.Connection().isExist("contract_customer", "hdkh_id", khachhang.hdkh_id.ToString(), "flag=1")) return Json(new { msg = "exist" });
                 // HD_THUEBAO
                 param = new Dapper.Oracle.OracleDynamicParameters("returns");
                 param.Add("v_hdkh_id", khachhang.hdkh_id);

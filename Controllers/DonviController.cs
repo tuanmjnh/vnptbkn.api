@@ -10,7 +10,7 @@ using VNPTBKN.API.Common;
 namespace VNPTBKN.API.Controllers {
   [Route("api/donvi")]
   [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-  public class DBDonviController : Controller {
+  public class DonviController : Controller {
     [HttpGet]
     public async Task<IActionResult> Get() {
       try {
