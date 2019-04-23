@@ -20,9 +20,9 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var data = await db.Connection().GetAllAsync<Models.Core.Permissions>();
-                return Json(new { data = data, msg = "success" });
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpGet("[action]/{key}")]
@@ -35,9 +35,9 @@ namespace VNPTBKN.API.Controllers
                 foreach (var item in tmp) key += $"'{item}',";
                 var qry = $"select * from Permissions where app_key in({key.Trim(',')}) and flag={query.flag}";
                 var data = await db.Connection().QueryAsync<Models.Core.Permissions>(qry);
-                return Json(new { data = data, msg = "success" });
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpGet("{id:int}")]
@@ -46,9 +46,9 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var data = await db.Connection().GetAsync<Models.Core.Permissions>(id);
-                return Json(new { data = id, msg = "success" });
+                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpGet("[action]/{code}")]
@@ -56,11 +56,10 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                if (db.Connection().isExist("Permissions", "code", code))
-                    return Json(new { msg = "exist" });
-                return Json(new { msg = "success" });
+                if (db.Connection().isExist("Permissions", "code", code)) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPost]
@@ -68,16 +67,18 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                if (db.Connection().isExist("Permissions", "code", data.code)) return Json(new { msg = "exist" });
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (db.Connection().isExist("Permissions", "code", data.code)) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
                 // data.id = Guid.NewGuid().ToString("N");
-                data.created_by = TM.Core.HttpContext.Header();
+                data.created_by = nd.ma_nd;
                 data.created_at = DateTime.Now;
                 await db.Connection().InsertOraAsync(data);
-                return Json(new { data = data, msg = "success" });
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception)
             {
-                return Json(new { msg = "danger" });
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
             }
         }
 
@@ -86,6 +87,8 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
                 var _data = await db.Connection().GetAsync<Models.Core.Permissions>(data.id);
                 if (_data != null)
                 {
@@ -93,14 +96,14 @@ namespace VNPTBKN.API.Controllers
                     _data.title = data.title;
                     _data.orders = data.orders;
                     _data.descs = data.descs;
-                    _data.updated_by = TM.Core.HttpContext.Header();
+                    _data.updated_by = nd.ma_nd;
                     _data.updated_at = DateTime.Now;
                     _data.flag = data.flag;
                 }
                 await db.Connection().UpdateAsync(_data);
-                return Json(new { data = _data, msg = "success" });
+                return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPut("[action]")]
@@ -108,17 +111,17 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var delete_by = TM.Core.HttpContext.Header();
-                var delete_at = DateTime.Now;
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
                 var qry = "BEGIN ";
                 foreach (var item in data)
-                    qry += $"update Permissions set flag={item.flag} where id='{item.id}';\r\n";
+                    qry += $"update Permissions set flag={item.flag},deleted_by='{nd.ma_nd}',deleted_at={DateTime.Now.ParseDateTime()} where id='{item.id}';\r\n";
                 qry += "END;";
                 await db.Connection().QueryAsync(qry);
                 await db.Connection().QueryAsync("COMMIT");
-                return Json(new { msg = "success" });
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPut("[action]")]
@@ -127,9 +130,9 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 if (data.Count > 0) await db.Connection().DeleteAsync(data);
-                return Json(new { data = data, msg = "success" });
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpDelete("{id}")]
@@ -138,9 +141,9 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 await db.Connection().GetAllAsync<Models.Core.Permissions>();
-                return Json(new { data = id, msg = "success" });
+                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception) { return Json(new { msg = "danger" }); }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
     }
 }

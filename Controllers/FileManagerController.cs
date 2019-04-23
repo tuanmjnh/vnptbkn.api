@@ -9,27 +9,33 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
-namespace VNPTBKN.API.Controllers {
+namespace VNPTBKN.API.Controllers
+{
     // [Produces("application/json")]
     [Route("api/filemanager")]
     [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-    public class FileManagerController : Controller {
+    public class FileManagerController : Controller
+    {
         string rootPath = "";
-        public FileManagerController() {
+        public FileManagerController()
+        {
             // Helpers.HttpContext.baseUrl;
             rootPath = TM.Core.HttpContext.WebRootPath;
         }
 
         [HttpGet]
-        public IActionResult Get(string basePath = "Uploads", string subPath = "", string extension = "") {
-            try {
+        public IActionResult Get(string basePath = "Uploads", string subPath = "", string extension = "")
+        {
+            try
+            {
                 var data = new List<FileManagerObject>();
                 var path = $"{basePath}";
                 if (subPath.Length > 0) path = $"{path}/{subPath}";
                 var Dir = new DirectoryInfo($"{rootPath}/{path}"); // collection["path"].ToString()
                 TM.Core.IO.CreateDirectory($"{rootPath}/{path}");
                 var subDir = Dir.GetDirectories();
-                foreach (var item in subDir) {
+                foreach (var item in subDir)
+                {
                     var _file = new FileManagerObject();
                     _file.id = Guid.NewGuid().ToString("N");
                     _file.parent = "";
@@ -57,7 +63,8 @@ namespace VNPTBKN.API.Controllers {
 
                 }
                 var subFiles = Dir.GetFiles();
-                foreach (var item in subFiles) {
+                foreach (var item in subFiles)
+                {
                     var _file = new FileManagerObject();
                     _file.id = Guid.NewGuid().ToString("N");
                     _file.parent = "";
@@ -82,40 +89,46 @@ namespace VNPTBKN.API.Controllers {
                     _file.last_write_time_utc = item.LastWriteTimeUtc;
                     _file.exists = item.Exists;
 
-                    if (extension != "" && extension == item.Extension) {
+                    if (extension != "" && extension == item.Extension)
                         data.Add(_file);
-                    } else {
+                    else
                         data.Add(_file);
-                    }
                 }
-                return Json(new { files = data, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { files = data, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPost]
-        public IActionResult Upload(IFormCollection collection) {
-            try {
+        public IActionResult Upload(IFormCollection collection)
+        {
+            try
+            {
                 var rs = new List<FileManagerObject>();
                 var files = collection.Files;
                 var basePath = collection["basePath"].ToString();
                 basePath = string.IsNullOrEmpty(basePath) ? "Uploads" : basePath;
                 var subPath = collection["subPath"].ToString().Trim('/');
-                if (files.Count > 0) {
+                if (files.Count > 0)
+                {
                     //Create Directory Upload
                     var path = $"{basePath}";
                     TM.Core.IO.CreateDirectory($"{rootPath}/{path}", false);
-                    if (path.Length > 0) {
+                    if (path.Length > 0)
+                    {
                         path = string.IsNullOrEmpty(subPath) ? $"{path}" : $"{path}/{subPath}";
                         TM.Core.IO.CreateDirectory($"{rootPath}/{path}", false);
                     }
                     //Upload File
-                    for (int i = 0; i < files.Count; i++) {
+                    for (int i = 0; i < files.Count; i++)
+                    {
                         if (files[i].Length < 1) continue;
                         var a = ContentDispositionHeaderValue.Parse(files[i].ContentDisposition);
                         var filename = ContentDispositionHeaderValue.Parse(files[i].ContentDisposition).FileName.ToString().Trim('"');
                         string filename_full = $"{rootPath}/{path}/{filename}";
                         //
-                        using(FileStream fs = System.IO.File.Create(filename_full)) {
+                        using (FileStream fs = System.IO.File.Create(filename_full))
+                        {
                             files[i].CopyTo(fs);
                             fs.Flush();
                         }
@@ -129,14 +142,15 @@ namespace VNPTBKN.API.Controllers {
                         //     pdf.Close();
                         // }
                         // 
-                        rs.Add(new FileManagerObject {
+                        rs.Add(new FileManagerObject
+                        {
                             id = Guid.NewGuid().ToString("N").ToUpper(),
-                                name = filename,
-                                full_name = $"{path}/{filename}",
-                                root = basePath,
-                                sub_directory = subPath,
-                                length = files[i].Length,
-                                extension = System.IO.Path.GetExtension(filename)
+                            name = filename,
+                            full_name = $"{path}/{filename}",
+                            root = basePath,
+                            sub_directory = subPath,
+                            length = files[i].Length,
+                            extension = System.IO.Path.GetExtension(filename)
                         });
                         // Extract
                         // if (Helpers.IO.isCompress(filename_full)) {
@@ -146,37 +160,49 @@ namespace VNPTBKN.API.Controllers {
                         // System.IO.Compression.ZipFile.CreateFromDirectory( $"{rootPath}/{path}/test", $"{rootPath}/{path}/test.zip");
                     }
                 }
-                return Json(new { files = rs, message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+                return Json(new { files = rs, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPost("create")]
-        public IActionResult Create(IFormCollection collection) {
-            try {
-                return Json(new { message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+        public IActionResult Create(IFormCollection collection)
+        {
+            try
+            {
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPost("update")]
-        public IActionResult Update(IFormCollection collection) {
-            try {
-                return Json(new { message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+        public IActionResult Update(IFormCollection collection)
+        {
+            try
+            {
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPost("delete")]
-        public IActionResult Delete(IFormCollection collection) {
-            try {
-                return Json(new { message = "success" });
-            } catch (System.Exception) { return Json(new { message = "danger" }); }
+        public IActionResult Delete(IFormCollection collection)
+        {
+            try
+            {
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
-        public class FileUpload {
+        public class FileUpload
+        {
             public string id { get; set; }
             public string originalName { get; set; }
             public string url { get; set; }
             public string attach { get; set; }
         }
-        public class FileManagerObject {
+        public class FileManagerObject
+        {
             public string id { get; set; }
             public string parent { get; set; }
             public string root { get; set; }

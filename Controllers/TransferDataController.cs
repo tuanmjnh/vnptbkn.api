@@ -7,28 +7,37 @@ using Dapper.Contrib.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using VNPTBKN.API.Common;
 
-namespace VNPTBKN.API.Controllers {
+namespace VNPTBKN.API.Controllers
+{
     [Route("api/[controller]")]
     [ApiController, Microsoft.AspNetCore.Authorization.Authorize]
-    public class TransferDataController : Controller {
+    public class TransferDataController : Controller
+    {
         [HttpGet]
-        public async Task<IActionResult> Get() {
-            try {
+        public async Task<IActionResult> Get()
+        {
+            try
+            {
                 await db.Connection().GetAllAsync<Authentication.Core.Users>();
-                return Json(new { success = "Lấy dữ liệu thành công!" });
-            } catch (System.Exception ex) {
-                return Json(new { danger = ex.Message });
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception)
+            {
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> TransferDataPortal(string dataVal, string database = "SQL_Portal") {
-            try {
+        public async Task<IActionResult> TransferDataPortal(string dataVal, string database = "SQL_Portal")
+        {
+            try
+            {
                 var SQLServer = new TM.Core.Connection.SQLServer(database);
                 var Oracle = new TM.Core.Connection.Oracle("PORTAL");
                 var qry = $"SELECT * FROM {dataVal}";
                 var table = await SQLServer.Connection.QueryAsync<Authentication.Core.Users>(qry);
-                foreach (var i in table) {
+                foreach (var i in table)
+                {
                     i.id = i.id.ToUpper();
                     i.full_name = string.IsNullOrEmpty(i.full_name) ? i.full_name : i.full_name;
                     i.created_by = string.IsNullOrEmpty(i.created_by) ? "Admin" : i.created_by;
@@ -36,24 +45,30 @@ namespace VNPTBKN.API.Controllers {
                 }
                 Oracle.Connection.Insert(table);
 
-                return Json(new { success = "Cập nhật thành công" });
-            } catch (System.Exception ex) {
-                return Json(new { danger = ex.Message });
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception)
+            {
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
             }
         }
 
         [HttpPost("TransferDataCuoc/{table}")]
-        public async Task<IActionResult> TransferDataCuoc(string table, string database = "SQL_CUOC") {
-            try {
+        public async Task<IActionResult> TransferDataCuoc(string table, string database = "SQL_CUOC")
+        {
+            try
+            {
                 var SQLServer = new TM.Core.Connection.SQLServer(database);
                 var Oracle = new TM.Core.Connection.Oracle("VNPTBK");
                 var qry = $"SELECT * FROM {table}";
                 var data = await SQLServer.Connection.QueryAsync<Models.Core.Groups>(qry);
                 Oracle.Connection.InsertOra(data);
 
-                return Json(new { success = "Cập nhật thành công" });
-            } catch (System.Exception ex) {
-                return Json(new { danger = ex.Message });
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception)
+            {
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
             }
         }
     }
