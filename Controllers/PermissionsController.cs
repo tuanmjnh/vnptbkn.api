@@ -68,7 +68,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 if (db.Connection().isExist("Permissions", "code", data.code)) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
                 // data.id = Guid.NewGuid().ToString("N");
                 data.created_by = nd.ma_nd;
@@ -88,7 +88,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var _data = await db.Connection().GetAsync<Models.Core.Permissions>(data.id);
                 if (_data != null)
                 {
@@ -112,7 +112,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = "BEGIN ";
                 foreach (var item in data)
                     qry += $"update Permissions set flag={item.flag},deleted_by='{nd.ma_nd}',deleted_at={DateTime.Now.ParseDateTime()} where id='{item.id}';\r\n";

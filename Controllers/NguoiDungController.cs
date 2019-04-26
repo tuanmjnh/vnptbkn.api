@@ -43,7 +43,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var matkhau = "vnptbkn@123";
                 var _data = await db.Connection().GetAsync<Authentication.Core.nguoidung>(id);
                 if (_data != null)
@@ -75,7 +75,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = "BEGIN ";
                 foreach (Authentication.Core.nguoidung_role item in data)
                 {

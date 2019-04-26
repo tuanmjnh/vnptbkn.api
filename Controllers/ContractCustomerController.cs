@@ -32,7 +32,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 // Query
                 var qry = "ten_dv,ma_gd,ma_hd,ma_kh,ten_kh,so_dt,ten_loaihd loaihd,nguoi_cn,to_char(ngay_cn,'yyyy/MM/dd')ngay_cn,";
                 qry += "REPLACE(attach,'Uploads/HopDong/','')file_hd,created_by nguoi_nhap,to_char(created_at,'yyyy/MM/dd')ngay_nhap,descs ghichu";//,deleted_by,to_char(deleted_at,'dd/MM/yyyy')";
@@ -114,7 +114,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var tmp = key.Trim(',').Split(',');
                 key = "";
                 foreach (var item in tmp) key += $"{item},";
@@ -131,7 +131,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 //if (db.Connection().isExist("contract_customer", "ma_gd", data.khachhang.ma_gd)) return Json(new { msg = "exist" });
                 //data.khachhang.cc_id = Guid.NewGuid().ToString();
                 //data.khachhang.app_key = "cc_2";
@@ -154,7 +154,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 data.updated_by = nd.ma_nd;
                 data.updated_at = DateTime.Now;
                 await db.Connection().UpdateAsync(data);
@@ -168,7 +168,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var now = DateTime.Now;
                 var qry = "BEGIN ";
                 foreach (var item in data)
@@ -240,7 +240,7 @@ namespace VNPTBKN.API.Controllers
         }
         public partial class ContractCustomerKH : Models.Core.HD_KHACHHANG
         {
-            public string hdkh_id { get; set; }
+            // public string hdkh_id { get; set; }
             public string id { get; set; }
             public string attach { get; set; }
             public string descs { get; set; }

@@ -87,7 +87,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
                 // var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}'";
                 var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Dictionary>(qry);
@@ -118,7 +118,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
                 // var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}'";
                 var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Dictionary>(qry);
@@ -144,7 +144,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = "BEGIN ";
                 foreach (var item in data)
                     qry += $"delete Dictionary where id='{item.id}';\r\n";

@@ -22,20 +22,18 @@ namespace VNPTBKN.API.Controllers
                 // var data = await db.Connection().GetAllAsync<Models.Core.Items>();
                 // return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString()});
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 // Query
-                var qry = "title,url,orders,position,descs,created_by,to_char(created_at,'dd/MM/yyyy')created_at,created_ip,";
-                qry += "updated_by,to_char(updated_at,'dd/MM/yyyy')updated_at,updated_ip,deleted_by,to_char(deleted_at,'dd/MM/yyyy')deleted_at,deleted_ip,flag";
+                var qry = "app_key,code,title,icon,image,url,orders,quantity,descs,content,attach,tags,";
+                qry += "created_by,to_char(created_at,'dd/MM/yyyy')created_at,created_ip,";
+                qry += "updated_by,to_char(updated_at,'dd/MM/yyyy')updated_at,updated_ip,";
+                qry += "deleted_by,to_char(deleted_at,'dd/MM/yyyy')deleted_at,deleted_ip,flag";
                 qry = $"select {(paging.isExport ? qry : "*")} from Items where flag in({paging.flag})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                     qry += $@" and (or CONVERTTOUNSIGN(title) like CONVERTTOUNSIGN('%{paging.search}%'))";
                 // Paging Params
-                if (paging.isExport)
-                {
-                    paging.page = 0;
-                    paging.rowsPerPage = 0;
-                }
+                if (paging.isExport) paging.rowsPerPage = 0;
                 var param = new Dapper.Oracle.OracleDynamicParameters("v_data");
                 param.Add("v_sql", qry);
                 param.Add("v_offset", paging.page);
@@ -115,7 +113,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 if (db.Connection().isExist("Items", "code", data.code)) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
                 data.created_by = nd.ma_nd;
                 data.created_at = DateTime.Now;
@@ -136,7 +134,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var _data = await db.Connection().GetAsync<Models.Core.Items>(data.id);
                 if (_data != null)
                 {
@@ -150,6 +148,7 @@ namespace VNPTBKN.API.Controllers
                     _data.quantity = data.quantity;
                     _data.descs = data.descs;
                     _data.content = data.content;
+                    _data.attach = data.attach;
                     _data.tags = data.tags;
                     _data.updated_by = nd.ma_nd;
                     _data.updated_at = DateTime.Now;
@@ -168,7 +167,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token });
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var now = DateTime.Now;
                 var qry = "BEGIN ";
                 foreach (var item in data)
