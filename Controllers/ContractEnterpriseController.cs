@@ -130,11 +130,11 @@ namespace VNPTBKN.API.Controllers
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
-    }
-    public partial class Paging : TM.Core.Common.Paging
-    {
-        public int donvi_id { get; set; }
-        public int group_id { get; set; }
-        public int app_key { get; set; }
+        public partial class Paging : TM.Core.Common.Paging
+        {
+            public int donvi_id { get; set; }
+            public int group_id { get; set; }
+            public int app_key { get; set; }
+        }
     }
 }

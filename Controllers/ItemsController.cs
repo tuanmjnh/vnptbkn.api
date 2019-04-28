@@ -31,7 +31,7 @@ namespace VNPTBKN.API.Controllers
                 qry = $"select {(paging.isExport ? qry : "*")} from Items where flag in({paging.flag})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
-                    qry += $@" and (or CONVERTTOUNSIGN(title) like CONVERTTOUNSIGN('%{paging.search}%'))";
+                    qry += $@" and CONVERTTOUNSIGN(title) like CONVERTTOUNSIGN('%{paging.search}%')";
                 // Paging Params
                 if (paging.isExport) paging.rowsPerPage = 0;
                 var param = new Dapper.Oracle.OracleDynamicParameters("v_data");

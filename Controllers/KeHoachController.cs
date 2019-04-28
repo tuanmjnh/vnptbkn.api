@@ -15,7 +15,7 @@ namespace VNPTBKN.API.Controllers
     public class KeHoachController : Controller
     {
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] TM.Core.Common.Paging paging)
+        public async Task<IActionResult> Get([FromQuery] Paging paging)
         {
             try
             {
@@ -24,16 +24,35 @@ namespace VNPTBKN.API.Controllers
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 // Query
-                var qry = "app_key,code,title,icon,image,url,orders,quantity,descs,content,attach,tags,";
-                qry += "created_by,to_char(created_at,'dd/MM/yyyy')created_at,created_ip,";
-                qry += "updated_by,to_char(updated_at,'dd/MM/yyyy')updated_at,updated_ip,";
-                qry += "deleted_by,to_char(deleted_at,'dd/MM/yyyy')deleted_at,deleted_ip,flag";
-                qry = $"select {(paging.isExport ? qry : "*")} from Items where flag in({paging.flag})";
+                var qry = "";
+                if (paging.isExport)
+                {
+                    qry = "select dv.ten_dv,gr.title,tb.ma_tb,tb.diachi_tb,tb.so_dt,tb.ma_nv,tb.de_xuat,tb.thang_bd,tb.thang_kt,tb.ghichu";
+                    qry += " from kehoach_tb tb,db_donvi dv,groups gr";
+                    qry += $" where tb.donvi_id=dv.donvi_id and tb.nhom_kh=gr.id and tb.trang_thai in({paging.flag})";
+                }
+                else qry = $"select * from kehoach_tb tb where tb.trang_thai in({paging.flag})";
+                // Đơn vị
+                if (nd.donvi_id > 0)
+                    qry += $" and donvi_id in({nd.donvi_id})";
+                else
+                   if (paging.donvi_id > 0) qry += $" and tb.donvi_id in({paging.donvi_id})";
+                // Nhóm kế hoạch
+                if (paging.nhomkh_id > 0) qry += $" and tb.nhom_kh in({paging.nhomkh_id})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
-                    qry += $@" and (or CONVERTTOUNSIGN(title) like CONVERTTOUNSIGN('%{paging.search}%'))";
+                {
+                    qry += $@" and (CONVERTTOUNSIGN(tb.ma_tb) like CONVERTTOUNSIGN('%{paging.search}%')";
+                    qry += $@" or CONVERTTOUNSIGN(tb.diachi_tb) like CONVERTTOUNSIGN('%{paging.search}%')";
+                    qry += $@" or CONVERTTOUNSIGN(tb.so_dt) like CONVERTTOUNSIGN('%{paging.search}%')";
+                    qry += $@" or CONVERTTOUNSIGN(tb.ma_nv) like CONVERTTOUNSIGN('%{paging.search}%'))";
+                }
                 // Paging Params
-                if (paging.isExport) paging.rowsPerPage = 0;
+                if (paging.isExport)
+                {
+                    paging.rowsPerPage = 0;
+                    // paging.sortBy="ten_dv";
+                }
                 var param = new Dapper.Oracle.OracleDynamicParameters("v_data");
                 param.Add("v_sql", qry);
                 param.Add("v_offset", paging.page);
@@ -50,7 +69,7 @@ namespace VNPTBKN.API.Controllers
                 else // View data
                     return Json(new
                     {
-                        data = await db.Connection().QueryAsync<Models.Core.Items>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
+                        data = await db.Connection().QueryAsync<Models.Core.Kehoach_TB>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
                         total = param.Get<int>("v_total"),
                         msg = TM.Core.Common.Message.success.ToString()
                     });
@@ -95,7 +114,24 @@ namespace VNPTBKN.API.Controllers
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
+        [HttpGet("[action]/{id:int}")]
+        public async Task<IActionResult> GetNguoidung(int id)
+        {
+            try
+            {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var qry = $"select * from db_nguoidung";
+                if (nd.donvi_id > 0)
+                    qry += $" where donvi_id in({nd.donvi_id})";
+                else
+                   if (id > 0) qry += $" where donvi_id in({id})";
 
+                var data = await db.Connection().QueryAsync<Authentication.Core.DBNguoidung>(qry);
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
         [HttpGet("[action]/{code}")]
         public IActionResult ExistCode(string code)
         {
@@ -114,6 +150,10 @@ namespace VNPTBKN.API.Controllers
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var qry = $@"update kehoach_tb set trang_thai=2,nguoi_huy='{nd.ma_nd}',
+                        ip_huy='{TM.Core.HttpContext.Header("LocalIP")}',ngay_huy={DateTime.Now.ParseDateTime()}
+                        where nhom_kh={req.nhomkh_id} and thang_bd={req.thang_bd} and donvi_id={req.donvi_id} and trang_thai=1";
+                await db.Connection().QueryAsync(qry);
                 var data = new Models.Core.Kehoach_TB();
                 var csv = TM.Core.IO.ReadFile(req.file_upload, '\t');
                 var error = new List<template_import>();
@@ -127,15 +167,15 @@ namespace VNPTBKN.API.Controllers
                         if (i < 1) continue;
                         data.id = Guid.NewGuid().ToString("N");
                         data.nhom_kh = req.nhomkh_id;
-                        data.donvi_id = int.Parse(csv[i][0]);
-                        data.ma_tb = csv[i][1];
-                        data.ten_tb = csv[i][2];
-                        data.diachi_tb = csv[i][3];
-                        data.so_dt = csv[i][4];
-                        data.thang_bd = int.Parse(csv[i][5]);
-                        data.thang_kt = int.Parse(csv[i][6]);
-                        data.ghichu = csv[i][7];
-                        data.ma_nv = csv[i][8];
+                        data.donvi_id = req.donvi_id;
+                        data.ma_tb = csv[i][0];
+                        data.ten_tb = csv[i][1];
+                        data.diachi_tb = csv[i][2];
+                        data.so_dt = csv[i][3];
+                        data.thang_bd = req.thang_bd;
+                        data.thang_kt = req.thang_bd;
+                        data.ma_nv = csv[i][4];
+                        data.ghichu = csv[i][5];
                         data.nguoi_nhap = nd.ma_nd;
                         data.ngay_nhap = DateTime.Now;
                         data.ip_nhap = TM.Core.HttpContext.Header("LocalIP");
@@ -146,15 +186,13 @@ namespace VNPTBKN.API.Controllers
                     catch (System.Exception)
                     {
                         var tmp = new template_import();
-                        tmp.donvi_id = csv[index][0];
-                        tmp.ma_tb = csv[index][1];
-                        tmp.ten_tb = csv[index][2];
-                        tmp.diachi_tb = csv[index][3];
-                        tmp.so_dt = csv[index][4];
-                        tmp.thang_bd = csv[index][5];
-                        tmp.thang_kt = csv[index][6];
-                        tmp.ghichu = csv[index][7];
-                        tmp.ma_nv = csv[index][8];
+                        tmp.ma_tb = csv[index][0];
+                        tmp.ten_tb = csv[index][1];
+                        tmp.diachi_tb = csv[index][2];
+                        tmp.so_dt = csv[index][3];
+                        tmp.ma_nv = csv[index][4];
+                        tmp.ghichu = csv[index][5];
+                        tmp.error = "Sai định dạng";
                         error.Add(tmp);
                         continue;
                     }
@@ -249,23 +287,29 @@ namespace VNPTBKN.API.Controllers
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
-    }
-    public partial class request_import
-    {
-        public int nhomkh_id { get; set; }
-        public string file_name { get; set; }
-        public string file_upload { get; set; }
-    }
-    public partial class template_import
-    {
-        public string donvi_id { get; set; }
-        public string ma_tb { get; set; }
-        public string ten_tb { get; set; }
-        public string diachi_tb { get; set; }
-        public string so_dt { get; set; }
-        public string thang_bd { get; set; }
-        public string thang_kt { get; set; }
-        public string ghichu { get; set; }
-        public string ma_nv { get; set; }
+        public partial class Paging : TM.Core.Common.Paging
+        {
+            public int donvi_id { get; set; }
+            public int nhomkh_id { get; set; }
+        }
+        public partial class request_import
+        {
+            public int donvi_id { get; set; }
+            public int nhomkh_id { get; set; }
+            public int thang_bd { get; set; }
+            public int thang_kt { get; set; }
+            public string file_name { get; set; }
+            public string file_upload { get; set; }
+        }
+        public partial class template_import
+        {
+            public string ma_tb { get; set; }
+            public string ten_tb { get; set; }
+            public string diachi_tb { get; set; }
+            public string so_dt { get; set; }
+            public string ma_nv { get; set; }
+            public string ghichu { get; set; }
+            public string error { get; set; }
+        }
     }
 }

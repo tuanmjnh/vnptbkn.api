@@ -37,6 +37,17 @@ namespace VNPTBKN.API.Controllers
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
+        [HttpGet("[action]/{id:int}")]
+        public async Task<IActionResult> GetByDonvi(int id)
+        {
+            try
+            {
+                var qry = $"select * from db_nguoidung where donvi_id={id}";
+                var data = await db.Connection().QueryFirstOrDefaultAsync<Authentication.Core.DBNguoidung>(qry);
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
         [HttpPut("[action]/{id:int}")]
         public async Task<IActionResult> ResetPassword(int id)
         {
@@ -76,12 +87,17 @@ namespace VNPTBKN.API.Controllers
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var nguoidung = await db.Connection().GetAllAsync<Authentication.Core.nguoidung>();
+                var index = 0;
                 var qry = "BEGIN ";
                 foreach (Authentication.Core.nguoidung_role item in data)
                 {
-                    var _data = await db.Connection().GetAsync<Authentication.Core.nguoidung>(item.nguoidung_id);
-                    if (_data != null)
+                    // var _data = await db.Connection().GetAsync<Authentication.Core.nguoidung>(item.nguoidung_id);
+                    if (nguoidung.Any(x => x.nguoidung_id == item.nguoidung_id))
+                    {
                         qry += $"update nguoidung set roles_id='{item.roles_id}' where nguoidung_id={item.nguoidung_id};\r\n";
+                        index++;
+                    }
                     else
                     {
                         var matkhau = "vnptbkn@123";
@@ -96,8 +112,11 @@ namespace VNPTBKN.API.Controllers
                     }
                 }
                 qry += "END;";
-                await db.Connection().QueryAsync(qry);
-                await db.Connection().QueryAsync("COMMIT");
+                if (index > 0)
+                {
+                    await db.Connection().QueryAsync(qry);
+                    await db.Connection().QueryAsync("COMMIT");
+                }
                 return Json(new { msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
