@@ -141,7 +141,7 @@ namespace VNPTBKN.API.Controllers
                 data.flag = 1;
                 await db.Connection().InsertOraAsync(data);
                 // 
-                var qry = $"select * from CONTRACT_CUSTOMER_KH where hdkh_id={data.hdkh_id} and flag=1";
+                var qry = $"select * from CONTRACT_CUSTOMER_KH where hdkh_id='{data.hdkh_id}' and flag=1";
                 var rs = db.Connection().QueryFirstOrDefault<ContractCustomerKH>(qry);
                 return Json(new { data = rs, msg = TM.Core.Common.Message.success.ToString() });
             }

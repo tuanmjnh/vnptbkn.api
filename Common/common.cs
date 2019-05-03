@@ -36,10 +36,13 @@ namespace VNPTBKN.API.Common
             if (data > 0) return true;
             return false;
         }
-        public static Authentication.Core.DBNguoidung getUserFromToken(this OracleConnection con, string token)
+        public static nguoidung getUserFromToken(this OracleConnection con, string token)
         {
-            var qry = $"select nd.*,nv.* from nguoidung nda,admin_bkn.nguoidung nd,admin_bkn.nhanvien nv where nda.nguoidung_id=nd.nguoidung_id and nd.nhanvien_id=nv.nhanvien_id and nda.token='{token.Replace("Bearer ", "")}'";
-            return con.QueryFirstOrDefault<Authentication.Core.DBNguoidung>(qry);
+            var qry = "select nd.*,nv.*,dv.ten_dv,dv.ma_dv,r.name ten_quyen,r.levels cap_quyen,r.code ma_quyen,r.roles quyen ";
+            qry += "from ttkd_bkn.nguoidung nda,ttkd_bkn.roles r,admin_bkn.nguoidung nd,admin_bkn.nhanvien nv,ttkd_bkn.db_donvi dv ";
+            qry += "where nda.roles_id=r.id and nda.nguoidung_id=nd.nguoidung_id and nd.nhanvien_id=nv.nhanvien_id and nv.donvi_id=dv.donvi_id(+) ";
+            qry += $"and nda.token='{token.Replace("Bearer ", "")}'";
+            return con.QueryFirstOrDefault<nguoidung>(qry);
         }
         public static long getID(this OracleConnection con, string table, string key = "id")
         {
@@ -47,6 +50,15 @@ namespace VNPTBKN.API.Common
             var rs = con.ExecuteScalar(qry);
             if (rs == null) return 1;
             return Convert.ToInt64(rs);
+        }
+        public partial class nguoidung : Authentication.Core.DBNguoidung
+        {
+            public string ten_dv { get; set; }
+            public string ma_dv { get; set; }
+            public string ten_quyen { get; set; }
+            public int cap_quyen { get; set; }
+            public string ma_quyen { get; set; }
+            public string quyen { get; set; }
         }
     }
 }
