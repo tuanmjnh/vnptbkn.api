@@ -50,6 +50,10 @@ namespace VNPTBKN.API.Controllers
                     qry += $" and donvi_id in({nd.donvi_id})";
                 else
                     if (paging.donvi_id > 0) qry += $" and donvi_id in({paging.donvi_id})";
+                if (paging.start_at.HasValue)
+                    qry += $" and created_at>={paging.start_at.Value.ParseDateTime()}";
+                if (paging.end_at.HasValue)
+                    qry += $" and created_at<={TM.Core.Format.Formating.AbsoluteEnd(paging.start_at.Value).ParseDateTime()}";
                 // Paging Params
                 if (paging.isExport)
                 {

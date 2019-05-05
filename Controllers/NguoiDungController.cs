@@ -48,6 +48,18 @@ namespace VNPTBKN.API.Controllers
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
+        [HttpGet("[action]/{ma_nd}")]
+        public async Task<IActionResult> GetPassword(string ma_nd)
+        {
+            try
+            {
+                var qry = $"select css_bkn.giaima_mk(matkhau)giaima_mk from admin_bkn.nguoidung where ma_nd='{ma_nd}'";
+                var data = await db.Connection("DHSX").QueryFirstOrDefaultAsync(qry);
+                if (data == null) return Json(new { msg = TM.Core.Common.Message.not_exist.ToString() });
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
         [HttpPut("[action]/{id:int}")]
         public async Task<IActionResult> ResetPassword(int id)
         {
