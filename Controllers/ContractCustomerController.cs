@@ -36,7 +36,7 @@ namespace VNPTBKN.API.Controllers
                 // Query
                 var qry = "ten_dv,ma_gd,ma_hd,ma_kh,ten_kh,so_dt,ten_loaihd loaihd,nguoi_cn,to_char(ngay_cn,'yyyy/MM/dd')ngay_cn,";
                 qry += "REPLACE(attach,'Uploads/HopDong/','')file_hd,created_by nguoi_nhap,to_char(created_at,'yyyy/MM/dd')ngay_nhap,descs ghichu";//,deleted_by,to_char(deleted_at,'dd/MM/yyyy')";
-                qry = $"select {(paging.isExport ? qry : "*")} from CONTRACT_CUSTOMER_KH where flag in({paging.flag})";
+                qry = $"select {(paging.is_export ? qry : "*")} from CONTRACT_CUSTOMER_KH where flag in({paging.flag})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                     qry += $@" and (ma_gd='{paging.search}' 
@@ -53,9 +53,9 @@ namespace VNPTBKN.API.Controllers
                 if (paging.start_at.HasValue)
                     qry += $" and created_at>={paging.start_at.Value.ParseDateTime()}";
                 if (paging.end_at.HasValue)
-                    qry += $" and created_at<={TM.Core.Format.Formating.AbsoluteEnd(paging.start_at.Value).ParseDateTime()}";
+                    qry += $" and created_at<={TM.Core.Format.Formating.AbsoluteEnd(paging.end_at.Value).ParseDateTime()}";
                 // Paging Params
-                if (paging.isExport)
+                if (paging.is_export)
                 {
                     paging.rowsPerPage = 0;
                     paging.sortBy = "ngay_nhap";
@@ -68,7 +68,7 @@ namespace VNPTBKN.API.Controllers
                 param.Add("v_total", 0);
                 // var data = await db.Connection().QueryAsync<ContractCustomerKH>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure);
                 // var data = await db.Connection().QueryAsync<ContractCustomerKH>(qry);
-                if (paging.isExport)// Export data
+                if (paging.is_export)// Export data
                     return Json(new
                     {
                         data = await db.Connection().QueryAsync("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),

@@ -24,7 +24,7 @@ namespace VNPTBKN.API.Controllers
                 var qry = "ten_dv,group_id,kieu_ld,ma_hd,ma_kh,ten_kh,diachi_kh,nguoi_dd,so_dt,stk,mst,";
                 qry += "so_gt,ngay_cap,noi_cap,to_char(ngay_bd,'yyyy/MM/dd')ngay_bd,to_char(ngay_kt,'yyyy/MM/dd')ngay_kt,";
                 qry += "so_luong,don_gia,vat,ghichu,created_by nguoi_nhap,to_char(created_at,'yyyy/MM/dd')ngay_nhap";//,deleted_by,to_char(deleted_at,'dd/MM/yyyy')";
-                qry = $"select {(paging.isExport ? qry : "*")} from contract_enterprise where flag in({paging.flag})";
+                qry = $"select {(paging.is_export ? qry : "*")} from contract_enterprise where flag in({paging.flag})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                     qry += $@" ma_hd='{paging.search}' 
@@ -38,7 +38,7 @@ namespace VNPTBKN.API.Controllers
                 else
                     if (paging.donvi_id > 0) qry += $" and donvi_id in({paging.donvi_id})";
                 // Paging Params
-                if (paging.isExport)
+                if (paging.is_export)
                 {
                     paging.rowsPerPage = 0;
                     paging.sortBy = "ngay_nhap";
@@ -51,7 +51,7 @@ namespace VNPTBKN.API.Controllers
                 param.Add("v_total", 0);
                 // var data = await db.Connection().QueryAsync<ContractCustomerKH>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure);
                 // var data = await db.Connection().QueryAsync<ContractCustomerKH>(qry);
-                if (paging.isExport)// Export data
+                if (paging.is_export)// Export data
                     return Json(new
                     {
                         data = await db.Connection().QueryAsync("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),

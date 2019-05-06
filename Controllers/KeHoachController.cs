@@ -25,18 +25,33 @@ namespace VNPTBKN.API.Controllers
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 // Query
                 var qry = "";
-                if (paging.isExport)
+                if (paging.is_export)
                 {
-                    qry = "select dv.ten_dv,gr.title,tb.ma_tb,tb.diachi_tb,tb.so_dt,tb.ma_nd,tb.de_xuat,tb.thang_bd,tb.thang_kt,tb.ghichu ";
+                    qry = "select dv.ten_dv,gr.title nhom_kh,tb.ma_tb,tb.diachi_tb,tb.so_dt,tb.ma_nd,tb.de_xuat,tb.thang_bd,tb.thang_kt,tb.ghichu ";
                     qry += "from kehoach_tb tb,db_donvi dv,groups gr ";
                     qry += $"where tb.donvi_id=dv.donvi_id and tb.nhom_kh=gr.id and tb.trang_thai in({paging.flag})";
                 }
                 else qry = $"select * from kehoach_tb tb where tb.trang_thai in({paging.flag})";
                 // Đơn vị
-                if (nd.donvi_id > 0)
+                if (nd.cap_quyen > 1)
+                {
                     qry += $" and tb.donvi_id in({nd.donvi_id})";
+                    if (nd.cap_quyen > 2) qry += $" and tb.ma_nd='{nd.ma_nd}'";
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(paging.ma_nd))
+                            qry += $" and tb.ma_nd='{paging.ma_nd}'";
+                        else qry += $" and tb.ma_nd is null";
+                    }
+                }
                 else
-                   if (paging.donvi_id > 0) qry += $" and tb.donvi_id in({paging.donvi_id})";
+                {
+                    qry += $" and tb.donvi_id in({paging.donvi_id})";
+                    if (!string.IsNullOrEmpty(paging.ma_nd))
+                        qry += $" and tb.ma_nd='{paging.ma_nd}'";
+                    else qry += $" and tb.ma_nd is null";
+                }
+
                 // Nhóm kế hoạch
                 if (paging.nhomkh_id > 0) qry += $" and tb.nhom_kh in({paging.nhomkh_id})";
                 // Search
@@ -48,7 +63,7 @@ namespace VNPTBKN.API.Controllers
                     qry += $@" or CONVERTTOUNSIGN(tb.ma_nd) like CONVERTTOUNSIGN('%{paging.search}%'))";
                 }
                 // Paging Params
-                if (paging.isExport)
+                if (paging.is_export)
                 {
                     paging.rowsPerPage = 0;
                     // paging.sortBy="ten_dv";
@@ -59,7 +74,7 @@ namespace VNPTBKN.API.Controllers
                 param.Add("v_limmit", paging.rowsPerPage);
                 param.Add("v_order", paging.sortBy);
                 param.Add("v_total", 0);
-                if (paging.isExport) // Export data
+                if (paging.is_export) // Export data
                     return Json(new
                     {
                         data = await db.Connection().QueryAsync("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
@@ -85,7 +100,7 @@ namespace VNPTBKN.API.Controllers
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 // Query
                 var qry = "";
-                if (paging.isExport)
+                if (paging.is_export)
                 {
                     qry = "select dv.ten_dv,gr.title,tb.ma_tb,tb.diachi_tb,tb.so_dt,tb.de_xuat,tb.thang_bd,tb.thang_kt,";
                     qry += "th.ma_nd,th.ngay_th,decode(th.ket_qua,1,'Chưa hoàn thành','Đã hoàn thành')ket_qua,th.ghichu ";
@@ -125,7 +140,7 @@ namespace VNPTBKN.API.Controllers
                     qry += $@" or CONVERTTOUNSIGN(th.ma_nd) like CONVERTTOUNSIGN('%{paging.search}%'))";
                 }
                 // Paging Params
-                if (paging.isExport)
+                if (paging.is_export)
                 {
                     paging.rowsPerPage = 0;
                     // paging.sortBy="ten_dv";
@@ -136,7 +151,7 @@ namespace VNPTBKN.API.Controllers
                 param.Add("v_limmit", paging.rowsPerPage);
                 param.Add("v_order", paging.sortBy);
                 param.Add("v_total", 0);
-                if (paging.isExport) // Export data
+                if (paging.is_export) // Export data
                     return Json(new
                     {
                         data = await db.Connection().QueryAsync("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
@@ -229,54 +244,129 @@ namespace VNPTBKN.API.Controllers
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = $@"update kehoach_tb set trang_thai=2,nguoi_huy='{nd.ma_nd}',
-                        ip_huy='{TM.Core.HttpContext.Header("LocalIP")}',ngay_huy={DateTime.Now.ParseDateTime()}
-                        where nhom_kh={req.nhomkh_id} and thang_bd={req.thang_bd} and donvi_id={req.donvi_id} and trang_thai=1";
-                await db.Connection().QueryAsync(qry);
+                if (req.nhomkh_id < 1) return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
+                if (req.donvi_id < 1) return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
+                // Bỏ danh sách thuê bao cũ
+                // var qry = $@"update kehoach_tb set trang_thai=2,nguoi_huy='{nd.ma_nd}',
+                //         ip_huy='{TM.Core.HttpContext.Header("LocalIP")}',ngay_huy={DateTime.Now.ParseDateTime()}
+                //         where nhom_kh={req.nhomkh_id} and thang_bd={req.thang_bd} and donvi_id={req.donvi_id} and trang_thai=1";
+                // await db.Connection().QueryAsync(qry);
+
+                var qry = "";
                 var data = new Models.Core.Kehoach_TB();
                 var csv = TM.Core.IO.ReadFile(req.file_upload, '\t');
                 var error = new List<template_import>();
                 var success = 0;
                 var index = 0;
-                for (int i = 0; i < csv.Count; i++)
+                for (index = 0; index < csv.Count; index++)
                 {
                     try
                     {
-                        index = i;
-                        if (i < 1) continue;
+                        if (index < 1) continue;
                         data.id = Guid.NewGuid().ToString("N");
                         data.nhom_kh = req.nhomkh_id;
                         data.donvi_id = req.donvi_id;
-                        data.ma_tb = csv[i][0];
-                        data.ten_tb = csv[i][1];
-                        data.diachi_tb = csv[i][2];
-                        data.so_dt = csv[i][3];
+                        data.ma_tb = csv[index][0];
+                        data.ten_tb = csv[index][1];
+                        data.diachi_tb = csv[index][2];
+                        data.so_dt = csv[index][3];
                         data.thang_bd = req.thang_bd;
                         data.thang_kt = req.thang_bd;
-                        data.ma_nd = csv[i][4];
-                        data.ghichu = csv[i][5];
+                        data.ma_nd = csv[index][4];
+                        data.ghichu = csv[index][5];
                         data.nguoi_nhap = nd.ma_nd;
                         data.ngay_nhap = DateTime.Now;
                         data.ip_nhap = TM.Core.HttpContext.Header("LocalIP");
                         data.trang_thai = 1;
+                        // Nếu đã có thuê bao thì bỏ qua
+                        qry = $"select ma_tb from kehoach_tb where nhom_kh={req.nhomkh_id} and donvi_id={req.donvi_id} and ma_tb='{data.ma_tb}'";
+                        var tmp = await db.Connection().QueryFirstOrDefaultAsync(qry);
+                        if (tmp != null)
+                        {
+                            ImportData(error, csv, index, "Trùng thuê bao");
+                            continue;
+                        }
+                        // Chưa có thực hiện nhập vào csdl
                         await db.Connection().InsertOraAsync(data);
+                        // qry = $"select ma_tb from kehoach_tb where nhom_kh={req.nhomkh_id} and donvi_id={req.donvi_id} and ma_tb='{data.ma_tb}' and id!='{data.id}'";
+                        // var update = await db.Connection().QueryFirstOrDefaultAsync(qry);
+                        // if (update != null)
+                        // {
+                        //     await db.Connection().QueryAsync(qry.Replace("select ma_tb from", "delete"));
+                        //     ImportData(error, csv, index, "Cập nhật lại");
+                        // }
                         success++;
                     }
                     catch (System.Exception)
                     {
-                        var tmp = new template_import();
-                        tmp.ma_tb = csv[index][0];
-                        tmp.ten_tb = csv[index][1];
-                        tmp.diachi_tb = csv[index][2];
-                        tmp.so_dt = csv[index][3];
-                        tmp.ma_nd = csv[index][4];
-                        tmp.ghichu = csv[index][5];
-                        tmp.error = "Sai định dạng";
-                        error.Add(tmp);
+                        ImportData(error, csv, index, "Sai định dạng");
+                        // var tmp = new template_import();
+                        // tmp.ma_tb = csv[index][0];
+                        // tmp.ten_tb = csv[index][1];
+                        // tmp.diachi_tb = csv[index][2];
+                        // tmp.so_dt = csv[index][3];
+                        // tmp.ma_nd = csv[index][4];
+                        // tmp.ghichu = csv[index][5];
+                        // tmp.error = "Sai định dạng";
+                        // error.Add(tmp);
                         continue;
                     }
                 }
-                return Json(new { success = success, error = error, msg = TM.Core.Common.Message.success.ToString() });
+                return Json(new
+                {
+                    total = index - 1,
+                    success = success,
+                    error = error,
+                    msg = TM.Core.Common.Message.success.ToString()
+                });
+            }
+            catch (System.Exception)
+            {
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
+            }
+        }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> UpdateND([FromBody] request_import req)
+        {
+            try
+            {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var qry = "";
+                var csv = TM.Core.IO.ReadFile(req.file_upload, '\t');
+                var error = new List<template_import>();
+                var success = 0;
+                var index = 0;
+                for (index = 0; index < csv.Count; index++)
+                {
+                    try
+                    {
+                        if (index < 1) continue;
+                        // Kiểm tra thuê bao
+                        qry = $"select ma_tb from kehoach_tb where donvi_id={nd.donvi_id} and ma_tb='{csv[index][0]}'";
+                        var tmp = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Kehoach_TB>(qry);
+                        if (tmp == null)
+                        {
+                            ImportData(error, csv, index, "Không có thuê bao");
+                            continue;
+                        }
+                        qry = $"update kehoach_tb set ma_nd='{csv[index][1].Trim()}' where ma_tb='{csv[index][0]}' and donvi_id={nd.donvi_id}";
+                        await db.Connection().QueryAsync(qry);
+                        success++;
+                    }
+                    catch (System.Exception)
+                    {
+                        ImportData(error, csv, index, "Sai định dạng");
+                        continue;
+                    }
+                }
+                return Json(new
+                {
+                    total = index - 1,
+                    success = success,
+                    error = error,
+                    msg = TM.Core.Common.Message.success.ToString()
+                });
             }
             catch (System.Exception)
             {
@@ -401,6 +491,18 @@ namespace VNPTBKN.API.Controllers
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
+        public void ImportData(List<template_import> data, List<string[]> csv, int index, string error)
+        {
+            var tmp = new template_import();
+            tmp.ma_tb = csv[index][0];
+            tmp.ten_tb = csv[index][1];
+            tmp.diachi_tb = csv[index][2];
+            tmp.so_dt = csv[index][3];
+            tmp.ma_nd = csv[index][4];
+            tmp.ghichu = csv[index][5];
+            tmp.error = error;
+            data.Add(tmp);
         }
         public partial class Paging : TM.Core.Common.Paging
         {

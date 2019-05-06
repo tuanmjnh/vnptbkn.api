@@ -15,7 +15,7 @@ namespace VNPTBKN.API.Controllers
     public class ItemsController : Controller
     {
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] TM.Core.Common.Paging paging)
+        public async Task<IActionResult> Get([FromQuery] Paging paging)
         {
             try
             {
@@ -28,19 +28,22 @@ namespace VNPTBKN.API.Controllers
                 qry += "created_by,to_char(created_at,'dd/MM/yyyy')created_at,created_ip,";
                 qry += "updated_by,to_char(updated_at,'dd/MM/yyyy')updated_at,updated_ip,";
                 qry += "deleted_by,to_char(deleted_at,'dd/MM/yyyy')deleted_at,deleted_ip,flag";
-                qry = $"select {(paging.isExport ? qry : "*")} from Items where flag in({paging.flag})";
+                qry = $"select {(paging.is_export ? qry : "*")} from Items where flag in({paging.flag})";
+                // Extras
+                if (!string.IsNullOrEmpty(paging.app_key))
+                    qry += $" and app_key in('{paging.app_key}')";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                     qry += $@" and CONVERTTOUNSIGN(title) like CONVERTTOUNSIGN('%{paging.search}%')";
                 // Paging Params
-                if (paging.isExport) paging.rowsPerPage = 0;
+                if (paging.is_export) paging.rowsPerPage = 0;
                 var param = new Dapper.Oracle.OracleDynamicParameters("v_data");
                 param.Add("v_sql", qry);
                 param.Add("v_offset", paging.page);
                 param.Add("v_limmit", paging.rowsPerPage);
                 param.Add("v_order", paging.sortBy);
                 param.Add("v_total", 0);
-                if (paging.isExport) // Export data
+                if (paging.is_export) // Export data
                     return Json(new
                     {
                         data = await db.Connection().QueryAsync("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
@@ -189,6 +192,10 @@ namespace VNPTBKN.API.Controllers
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
+        public partial class Paging : TM.Core.Common.Paging
+        {
+            public string app_key { get; set; }
         }
     }
 }
