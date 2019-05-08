@@ -14,15 +14,81 @@ namespace VNPTBKN.API.Controllers
     public class NguoiDungController : Controller
     {
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] Paging paging)
         {
             try
             {
-                var qry = $"select db.*,nd.roles_id,r.name roles_name,r.color from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+)";
-                var data = await db.Connection().QueryAsync<Authentication.Core.DBnguoidungRoles>(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                // var data = await db.Connection().GetAllAsync<Models.Core.Items>();
+                // return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString()});
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                // Query
+                var qry = "";
+                if (paging.is_export)
+                {
+                    qry = "select db.* ";
+                    qry += "from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r ";
+                    qry += $"where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.trangthai in({paging.flag})";
+                }
+                else
+                {
+                    qry = "select db.*,nd.roles_id,r.name roles_name,r.color ";
+                    qry += "from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r ";
+                    qry += $"where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.trangthai in({paging.flag})";
+                }
+                // Đơn vị
+                if (nd.cap_quyen > 1)
+                    qry += $" and db.donvi_id in({nd.donvi_id})";
+                else
+                {
+                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
+                        qry += $" and db.donvi_id in({String.Join(",", paging.donvi_id)})";
+                    else qry += $" and db.donvi_id in(-1)";
+                }
+
+                // Search
+                if (!string.IsNullOrEmpty(paging.search))
+                {
+                    qry += $@" and (CONVERTTOUNSIGN(tb.ma_tb) like CONVERTTOUNSIGN('%{paging.search}%')";
+                    qry += $@" or CONVERTTOUNSIGN(tb.diachi_tb) like CONVERTTOUNSIGN('%{paging.search}%')";
+                    qry += $@" or CONVERTTOUNSIGN(tb.so_dt) like CONVERTTOUNSIGN('%{paging.search}%')";
+                    qry += $@" or CONVERTTOUNSIGN(tb.ma_nd) like CONVERTTOUNSIGN('%{paging.search}%'))";
+                }
+                // Paging Params
+                if (paging.is_export)
+                {
+                    paging.rowsPerPage = 0;
+                    // paging.sortBy="ten_dv";
+                }
+                var param = new Dapper.Oracle.OracleDynamicParameters("v_data");
+                param.Add("v_sql", qry);
+                param.Add("v_offset", paging.page);
+                param.Add("v_limmit", paging.rowsPerPage);
+                param.Add("v_order", paging.sortBy);
+                param.Add("v_total", 0);
+                if (paging.is_export) // Export data
+                    return Json(new
+                    {
+                        data = await db.Connection().QueryAsync("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
+                        total = param.Get<int>("v_total"),
+                        msg = TM.Core.Common.Message.success.ToString()
+                    });
+                else // View data
+                    return Json(new
+                    {
+                        data = await db.Connection().QueryAsync<Authentication.Core.DBnguoidungRoles>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
+                        total = param.Get<int>("v_total"),
+                        msg = TM.Core.Common.Message.success.ToString()
+                    });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+            // try
+            // {
+            //     var qry = $"select db.*,nd.roles_id,r.name roles_name,r.color from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+)";
+            //     var data = await db.Connection().QueryAsync<Authentication.Core.DBnguoidungRoles>(qry);
+            //     return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+            // }
+            // catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpGet("{id}")]
@@ -132,6 +198,10 @@ namespace VNPTBKN.API.Controllers
                 return Json(new { msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
+        public partial class Paging : TM.Core.Common.Paging
+        {
+            public List<int> donvi_id { get; set; }
         }
     }
 }

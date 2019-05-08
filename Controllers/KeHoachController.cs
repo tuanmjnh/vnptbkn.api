@@ -39,21 +39,23 @@ namespace VNPTBKN.API.Controllers
                     if (nd.cap_quyen > 2) qry += $" and tb.ma_nd='{nd.ma_nd}'";
                     else
                     {
-                        if (!string.IsNullOrEmpty(paging.ma_nd))
-                            qry += $" and tb.ma_nd='{paging.ma_nd}'";
+                        if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
+                            qry += $" and tb.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                         else qry += $" and tb.ma_nd is null";
                     }
                 }
                 else
                 {
-                    qry += $" and tb.donvi_id in({paging.donvi_id})";
-                    if (!string.IsNullOrEmpty(paging.ma_nd))
-                        qry += $" and tb.ma_nd='{paging.ma_nd}'";
+                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
+                        qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
+                    if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
+                        qry += $" and tb.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                     else qry += $" and tb.ma_nd is null";
                 }
 
                 // Nhóm kế hoạch
-                if (paging.nhomkh_id > 0) qry += $" and tb.nhom_kh in({paging.nhomkh_id})";
+                if (paging.nhomkh_id != null && paging.nhomkh_id.Count > 0)
+                    qry += $" and tb.nhom_kh in({String.Join(",", paging.nhomkh_id)})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                 {
@@ -121,16 +123,19 @@ namespace VNPTBKN.API.Controllers
                     if (nd.cap_quyen > 2)
                         qry += $" and th.ma_nd in('{nd.ma_nd}')";
                     else
-                       if (!string.IsNullOrEmpty(paging.ma_nd))
-                        qry += $" and th.ma_nd in('{paging.ma_nd}')";
+                      if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
+                        qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                 }
                 else
                 {
-                    if (paging.donvi_id > 0) qry += $" and tb.donvi_id in({paging.donvi_id})";
-                    if (!string.IsNullOrEmpty(paging.ma_nd)) qry += $" and th.ma_nd in('{paging.ma_nd}')";
+                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
+                        qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
+                    if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
+                        qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                 }
                 // Nhóm kế hoạch
-                if (paging.nhomkh_id > 0) qry += $" and tb.nhom_kh in({paging.nhomkh_id})";
+                if (paging.nhomkh_id != null && paging.nhomkh_id.Count > 0)
+                    qry += $" and tb.nhom_kh in({String.Join(",", paging.nhomkh_id)})";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                 {
@@ -206,8 +211,8 @@ namespace VNPTBKN.API.Controllers
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
-        [HttpGet("[action]/{id:int}")]
-        public async Task<IActionResult> GetNguoidung(int id)
+        [HttpGet("[action]")]
+        public async Task<IActionResult> GetNguoidung([FromQuery] Paging paging)
         {
             try
             {
@@ -219,7 +224,8 @@ namespace VNPTBKN.API.Controllers
                 if (nd.donvi_id > 0)
                     qry += $" and dv.donvi_id in({nd.donvi_id})";
                 else
-                   if (id > 0) qry += $" and dv.donvi_id in({id})";
+                   if (paging.donvi_id != null && paging.donvi_id.Count > 0)
+                    qry += $" and dv.donvi_id in({String.Join(",", paging.donvi_id)})";
 
                 var data = await db.Connection().QueryAsync<nguoi_dung>(qry);
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
@@ -334,7 +340,7 @@ namespace VNPTBKN.API.Controllers
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = "";
                 var csv = TM.Core.IO.ReadFile(req.file_upload, '\t');
-                var error = new List<template_import>();
+                var error = new List<template_update_import>();
                 var success = 0;
                 var index = 0;
                 for (index = 0; index < csv.Count; index++)
@@ -347,7 +353,11 @@ namespace VNPTBKN.API.Controllers
                         var tmp = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Kehoach_TB>(qry);
                         if (tmp == null)
                         {
-                            ImportData(error, csv, index, "Không có thuê bao");
+                            var _tmp = new template_update_import();
+                            _tmp.ma_tb = csv[index][0];
+                            _tmp.ma_nd = csv[index][1];
+                            _tmp.ct_loi = "Không tồn tại thuê bao";
+                            error.Add(_tmp);
                             continue;
                         }
                         qry = $"update kehoach_tb set ma_nd='{csv[index][1].Trim()}' where ma_tb='{csv[index][0]}' and donvi_id={nd.donvi_id}";
@@ -356,7 +366,10 @@ namespace VNPTBKN.API.Controllers
                     }
                     catch (System.Exception)
                     {
-                        ImportData(error, csv, index, "Sai định dạng");
+                        var _tmp = new template_update_import();
+                        _tmp.ma_tb = csv[index][0];
+                        _tmp.ma_nd = csv[index][1];
+                        _tmp.ct_loi = "Sai định dạng";
                         continue;
                     }
                 }
@@ -501,14 +514,14 @@ namespace VNPTBKN.API.Controllers
             tmp.so_dt = csv[index][3];
             tmp.ma_nd = csv[index][4];
             tmp.ghichu = csv[index][5];
-            tmp.error = error;
+            tmp.ct_loi = error;
             data.Add(tmp);
         }
         public partial class Paging : TM.Core.Common.Paging
         {
-            public int donvi_id { get; set; }
-            public int nhomkh_id { get; set; }
-            public string ma_nd { get; set; }
+            public List<int> donvi_id { get; set; }
+            public List<int> nhomkh_id { get; set; }
+            public List<string> ma_nd { get; set; }
         }
         public partial class request_import
         {
@@ -527,7 +540,13 @@ namespace VNPTBKN.API.Controllers
             public string so_dt { get; set; }
             public string ma_nd { get; set; }
             public string ghichu { get; set; }
-            public string error { get; set; }
+            public string ct_loi { get; set; }
+        }
+        public partial class template_update_import
+        {
+            public string ma_tb { get; set; }
+            public string ma_nd { get; set; }
+            public string ct_loi { get; set; }
         }
         public partial class nguoi_dung
         {
