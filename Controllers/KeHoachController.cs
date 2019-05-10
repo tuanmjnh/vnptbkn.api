@@ -41,25 +41,19 @@ namespace VNPTBKN.API.Controllers
                 if (paging.flag == 2 && paging.ket_qua != null)
                     qry += $" and th.ket_qua in({paging.ket_qua})";
                 // Đơn vị
-                if (nd.cap_quyen > 1)
-                {
-                    qry += $" and tb.donvi_id in({nd.donvi_id})";
-                    if (nd.cap_quyen > 2) qry += $" and tb.ma_nd='{nd.ma_nd}'";
-                    else
-                    {
-                        if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
-                            qry += $" and tb.ma_nd in('{String.Join("','", paging.ma_nd)}')";
-                        else qry += $" and tb.ma_nd is null";
-                    }
-                }
+                if (nd.inRoles("donvi.select") && paging.donvi_id != null && paging.donvi_id.Count > 0)
+                    qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
                 else
+                    qry += $" and tb.donvi_id in({nd.donvi_id})";
+
+                if (nd.inRoles("nguoidung.select"))
                 {
-                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
-                        qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
                     if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
                         qry += $" and tb.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                     else qry += $" and tb.ma_nd is null";
                 }
+                else
+                    qry += $" and tb.ma_nd='{nd.ma_nd}'";
 
                 // Nhóm kế hoạch
                 if (paging.nhomkh_id != null && paging.nhomkh_id.Count > 0)
@@ -134,13 +128,10 @@ namespace VNPTBKN.API.Controllers
                       if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
                         qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                 }
-                else
-                {
-                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
-                        qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
-                    if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
-                        qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
-                }
+                if (nd.inRoles("donvi.select") && paging.donvi_id != null && paging.donvi_id.Count > 0)
+                    qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
+                if (nd.inRoles("nguoidung.select") && paging.ma_nd != null && paging.ma_nd.Count > 0)
+                    qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                 // Nhóm kế hoạch
                 if (paging.nhomkh_id != null && paging.nhomkh_id.Count > 0)
                     qry += $" and tb.nhom_kh in({String.Join(",", paging.nhomkh_id)})";
@@ -228,8 +219,8 @@ namespace VNPTBKN.API.Controllers
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
                 var qry = "select dnd.donvi_id,dnd.ma_nd,dnd.ten_nd,dnd.ma_nd,dnd.ten_nv,dnd.ten_nd||' - '||dnd.ma_nd||' - '||dv.ma_dv ten_nd_dv,dnd.gioitinh,dnd.so_dt,dv.ma_dv,dv.ten_dv,r.name ten_quyen ";
                 qry += "from db_nguoidung dnd,nguoidung nd,db_donvi dv,roles r ";
-                qry += "where dnd.nguoidung_id=nd.nguoidung_id and dnd.donvi_id=dv.donvi_id and nd.roles_id=r.id and r.levels=3";
-                if (nd.donvi_id > 0)
+                qry += "where dnd.nguoidung_id=nd.nguoidung_id and dnd.donvi_id=dv.donvi_id and nd.roles_id=r.id and r.levels=4 ";
+                if (!nd.inRoles("donvi.select"))
                     qry += $" and dv.donvi_id in({nd.donvi_id})";
                 else
                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
@@ -293,14 +284,14 @@ namespace VNPTBKN.API.Controllers
                         data.id = Guid.NewGuid().ToString("N");
                         data.nhom_kh = req.nhomkh_id;
                         data.donvi_id = req.donvi_id;
-                        data.ma_tb = csv[index][0];
-                        data.ten_tb = csv[index][1];
-                        data.diachi_tb = csv[index][2];
-                        data.so_dt = csv[index][3];
+                        data.ma_tb = csv[index][0].Trim();
+                        data.ten_tb = csv[index][1].Trim();
+                        data.diachi_tb = csv[index][2].Trim();
+                        data.so_dt = csv[index][3].Trim();
                         data.thang_bd = req.thang_bd;
                         data.thang_kt = req.thang_bd;
-                        data.ma_nd = csv[index][4];
-                        data.ghichu = csv[index][5];
+                        data.ma_nd = csv[index][4].Trim();
+                        data.ghichu = csv[index][5].Trim();
                         data.nguoi_nhap = nd.ma_nd;
                         data.ngay_nhap = DateTime.Now;
                         data.ip_nhap = TM.Core.HttpContext.Header("LocalIP");
@@ -375,8 +366,8 @@ namespace VNPTBKN.API.Controllers
                         if (tmp == null)
                         {
                             var _tmp = new template_update_import();
-                            _tmp.ma_tb = csv[index][0];
-                            _tmp.ma_nd = csv[index][1];
+                            _tmp.ma_tb = csv[index][0].Trim();
+                            _tmp.ma_nd = csv[index][1].Trim();
                             _tmp.ct_loi = "Không tồn tại thuê bao";
                             error.Add(_tmp);
                             continue;
@@ -388,8 +379,8 @@ namespace VNPTBKN.API.Controllers
                     catch (System.Exception)
                     {
                         var _tmp = new template_update_import();
-                        _tmp.ma_tb = csv[index][0];
-                        _tmp.ma_nd = csv[index][1];
+                        _tmp.ma_tb = csv[index][0].Trim();
+                        _tmp.ma_nd = csv[index][1].Trim();
                         _tmp.ct_loi = "Sai định dạng";
                         continue;
                     }
@@ -554,12 +545,12 @@ namespace VNPTBKN.API.Controllers
         public void ImportData(List<template_import> data, List<string[]> csv, int index, string error)
         {
             var tmp = new template_import();
-            tmp.ma_tb = csv[index][0];
-            tmp.ten_tb = csv[index][1];
-            tmp.diachi_tb = csv[index][2];
-            tmp.so_dt = csv[index][3];
-            tmp.ma_nd = csv[index][4];
-            tmp.ghichu = csv[index][5];
+            tmp.ma_tb = csv[index][0].Trim();
+            tmp.ten_tb = csv[index][1].Trim();
+            tmp.diachi_tb = csv[index][2].Trim();
+            tmp.so_dt = csv[index][3].Trim();
+            tmp.ma_nd = csv[index][4].Trim();
+            tmp.ghichu = csv[index][5].Trim();
             tmp.ct_loi = error;
             data.Add(tmp);
         }

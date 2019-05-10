@@ -44,6 +44,16 @@ namespace VNPTBKN.API.Common
             qry += $"and nda.token='{token.Replace("Bearer ", "")}'";
             return con.QueryFirstOrDefault<nguoidung>(qry);
         }
+        public static bool inRoles(this nguoidung nd, string roles)
+        {
+            var tmp = roles.Trim(',').Split(',');
+            foreach (var item in tmp)
+            {
+                if (nd.quyen.IndexOf($",{item},") > -1)
+                    return true;
+            }
+            return false;
+        }
         public static long getID(this OracleConnection con, string table, string key = "id")
         {
             var qry = $"select max({key})+1 {key} from {table}";

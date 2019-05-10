@@ -37,14 +37,15 @@ namespace VNPTBKN.API.Controllers
                     qry += $"where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.trangthai in({paging.flag})";
                 }
                 // Đơn vị
-                if (nd.cap_quyen > 1)
-                    qry += $" and db.donvi_id in({nd.donvi_id})";
-                else
+
+                if (nd.inRoles("donvi.select"))
                 {
                     if (paging.donvi_id != null && paging.donvi_id.Count > 0)
                         qry += $" and db.donvi_id in({String.Join(",", paging.donvi_id)})";
                     else qry += $" and db.donvi_id in(-1)";
                 }
+                else
+                    qry += $" and db.donvi_id in({nd.donvi_id})";
 
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
