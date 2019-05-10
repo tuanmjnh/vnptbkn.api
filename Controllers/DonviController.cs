@@ -14,11 +14,18 @@ namespace VNPTBKN.API.Controllers
     public class DonviController : Controller
     {
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] Paging paging)
         {
             try
             {
-                var data = await db.Connection().GetAllAsync<Models.Core.DBDonvi>();
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var qry = "select db.ma_dvi,dv.donvi_id,db.donvi_ql_id,db.ma_dv,dv.ten_dv,db.ten_dv_ql,db.sdt,db.stk ";
+                qry += "from admin_bkn.donvi dv,ttkd_bkn.db_donvi db ";
+                qry += "where dv.donvi_id=db.donvi_id(+) and dv.donvi_cha_id=5494 and dv.muc_id=3 ";
+                if (paging.ma_dvi > 0) qry += " and db.ma_dvi>0";
+                qry += "order by db.ma_dvi";
+                var data = await db.Connection().QueryAsync<Models.Core.DBDonvi>(qry); // await db.Connection().GetAllAsync<Models.Core.DBDonvi>();
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
@@ -91,5 +98,9 @@ namespace VNPTBKN.API.Controllers
         //     return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
         //   } catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         // }
+        public partial class Paging : TM.Core.Common.Paging
+        {
+            public int ma_dvi { get; set; }
+        }
     }
 }

@@ -66,6 +66,8 @@ namespace VNPTBKN.API.Controllers
                 if (_data != null)
                 {
                     _data.name = data.name;
+                    // _data.code = data.code;
+                    _data.levels = data.levels;
                     _data.roles = data.roles;
                     _data.orders = data.orders;
                     _data.descs = data.descs;

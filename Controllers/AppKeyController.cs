@@ -15,13 +15,14 @@ namespace VNPTBKN.API.Controllers
     public class AppKeyController : Controller
     {
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] TM.Core.Common.Paging paging)
+        public async Task<IActionResult> Get([FromQuery] Paging paging)
         {
             try
             {
+                var qry = $"select * from app_key where app_key in('{String.Join("','", paging.app_key)}') and flag in({paging.flag}) order by orders";
                 return Json(new
                 {
-                    data = await db.Connection().GetAllAsync<Models.Core.APP_KEY>(),
+                    data = await db.Connection().QueryAsync<Models.Core.APP_KEY>(qry),
                     msg = TM.Core.Common.Message.success.ToString()
                 });
             }
@@ -139,6 +140,10 @@ namespace VNPTBKN.API.Controllers
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
+        public partial class Paging : TM.Core.Common.Paging
+        {
+            public List<string> app_key { get; set; }
         }
     }
 }

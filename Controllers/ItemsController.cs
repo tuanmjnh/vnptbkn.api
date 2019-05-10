@@ -32,6 +32,8 @@ namespace VNPTBKN.API.Controllers
                 // Extras
                 if (!string.IsNullOrEmpty(paging.app_key))
                     qry += $" and app_key in('{paging.app_key}')";
+                if (!string.IsNullOrEmpty(paging.code))
+                    qry += $" and code in('{paging.code}')";
                 // Search
                 if (!string.IsNullOrEmpty(paging.search))
                     qry += $@" and CONVERTTOUNSIGN(title) like CONVERTTOUNSIGN('%{paging.search}%')";
@@ -196,6 +198,7 @@ namespace VNPTBKN.API.Controllers
         public partial class Paging : TM.Core.Common.Paging
         {
             public string app_key { get; set; }
+            public string code { get; set; }
         }
     }
 }

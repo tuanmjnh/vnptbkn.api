@@ -27,11 +27,19 @@ namespace VNPTBKN.API.Controllers
                 var qry = "";
                 if (paging.is_export)
                 {
-                    qry = "select dv.ten_dv,gr.title nhom_kh,tb.ma_tb,tb.diachi_tb,tb.so_dt,tb.ma_nd,tb.de_xuat,tb.thang_bd,tb.thang_kt,tb.ghichu ";
-                    qry += "from kehoach_tb tb,db_donvi dv,groups gr ";
-                    qry += $"where tb.donvi_id=dv.donvi_id and tb.nhom_kh=gr.id and tb.trang_thai in({paging.flag})";
+                    qry = "select dv.ten_dv,gr.title nhom_kh,tb.ma_tb,tb.ten_tb,tb.diachi_tb,tb.so_dt,tb.ma_nd,tb.ghichu,tb.nguoi_nhap,to_char(tb.ngay_nhap,'MM/DD/YYYY')ngay_nhap,";
+                    qry += "decode(th.ket_qua,1,'Thành công',2,'Không thành công','Chưa thực hiện')ket_qua,th.de_xuat,lydo.title lydo,th.ghichu ghichu_th,to_char(th.ngay_th,'MM/DD/YYYY')ngay_th,th.nguoi_cn nguoi_th,th.ip_cn ip_th ";
+                    qry += "from kehoach_tb tb,kehoach_th th,items lydo,groups gr,admin_bkn.donvi dv ";
+                    qry += $"where tb.id=th.kehoachtb_id(+) and th.lydo=lydo.id(+) and tb.nhom_kh=gr.id and tb.donvi_id=dv.donvi_id and tb.trang_thai in({paging.flag})";
                 }
-                else qry = $"select * from kehoach_tb tb where tb.trang_thai in({paging.flag})";
+                else
+                {
+                    qry = "select tb.*,th.ngay_th,th.ket_qua,th.de_xuat,lydo.title lydo,th.ghichu ghichu_th,th.nguoi_cn nguoi_cn_th,th.ip_cn ip_cn_th,th.ngay_cn ngay_cn_th ";
+                    qry += "from kehoach_tb tb,kehoach_th th,items lydo ";
+                    qry += $"where tb.id=th.kehoachtb_id(+) and th.lydo=lydo.id(+) and tb.trang_thai in({paging.flag})";
+                }
+                if (paging.flag == 2 && paging.ket_qua != null)
+                    qry += $" and th.ket_qua in({paging.ket_qua})";
                 // Đơn vị
                 if (nd.cap_quyen > 1)
                 {
@@ -86,7 +94,7 @@ namespace VNPTBKN.API.Controllers
                 else // View data
                     return Json(new
                     {
-                        data = await db.Connection().QueryAsync<Models.Core.Kehoach_TB>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
+                        data = await db.Connection().QueryAsync<kehoach_TH>("PAGING", param, commandType: System.Data.CommandType.StoredProcedure),
                         total = param.Get<int>("v_total"),
                         msg = TM.Core.Common.Message.success.ToString()
                     });
@@ -218,7 +226,7 @@ namespace VNPTBKN.API.Controllers
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = "select dnd.ma_nd,dnd.ten_nd,dnd.ma_nd,dnd.ten_nv,dnd.gioitinh,dnd.so_dt,dv.ma_dv,dv.ten_dv,r.name ten_quyen ";
+                var qry = "select dnd.donvi_id,dnd.ma_nd,dnd.ten_nd,dnd.ma_nd,dnd.ten_nv,dnd.ten_nd||' - '||dnd.ma_nd||' - '||dv.ma_dv ten_nd_dv,dnd.gioitinh,dnd.so_dt,dv.ma_dv,dv.ten_dv,r.name ten_quyen ";
                 qry += "from db_nguoidung dnd,nguoidung nd,db_donvi dv,roles r ";
                 qry += "where dnd.nguoidung_id=nd.nguoidung_id and dnd.donvi_id=dv.donvi_id and nd.roles_id=r.id and r.levels=3";
                 if (nd.donvi_id > 0)
@@ -226,8 +234,21 @@ namespace VNPTBKN.API.Controllers
                 else
                    if (paging.donvi_id != null && paging.donvi_id.Count > 0)
                     qry += $" and dv.donvi_id in({String.Join(",", paging.donvi_id)})";
-
+                qry += "order by dnd.donvi_id,dnd.ma_nd";
                 var data = await db.Connection().QueryAsync<nguoi_dung>(qry);
+                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+        }
+        [HttpGet("[action]/{id}")]
+        public async Task<IActionResult> GetLyDo(int id)
+        {
+            try
+            {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var qry = $"select * from items where app_key='lydo' and code='{id}'";
+                var data = await db.Connection().QueryAsync<Models.Core.Items>(qry);
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
@@ -442,7 +463,32 @@ namespace VNPTBKN.API.Controllers
                 return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
             }
         }
-
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Thuchien([FromBody] Models.Core.Kehoach_TH data)
+        {
+            try
+            {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var qry = $"select * from kehoach_tb where id='{data.kehoachtb_id}'";
+                var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Kehoach_TB>(qry);
+                if (_data == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
+                _data.trang_thai = 2;
+                data.id = Guid.NewGuid().ToString("N");
+                data.ma_nd = _data.ma_nd;
+                data.ngay_th = DateTime.Now;
+                data.nguoi_cn = nd.ma_nd;
+                data.ngay_cn = DateTime.Now;
+                data.ip_cn = TM.Core.HttpContext.Header("LocalIP");
+                await db.Connection().InsertOraAsync(data);
+                await db.Connection().UpdateAsync(_data);
+                return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
+            }
+            catch (System.Exception)
+            {
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
+            }
+        }
         [HttpPut]
         public async Task<IActionResult> Put([FromBody] Models.Core.Items data)
         {
@@ -522,6 +568,7 @@ namespace VNPTBKN.API.Controllers
             public List<int> donvi_id { get; set; }
             public List<int> nhomkh_id { get; set; }
             public List<string> ma_nd { get; set; }
+            public int? ket_qua { get; set; }
         }
         public partial class request_import
         {
@@ -550,10 +597,12 @@ namespace VNPTBKN.API.Controllers
         }
         public partial class nguoi_dung
         {
+            public int donvi_id { get; set; }
             public string ma_nd { get; set; }
             public string ten_nd { get; set; }
             public string ma_nv { get; set; }
             public string ten_nv { get; set; }
+            public string ten_nd_dv { get; set; }
             public string ma_dv { get; set; }
             public string ten_dv { get; set; }
             public string ten_quyen { get; set; }
@@ -565,8 +614,16 @@ namespace VNPTBKN.API.Controllers
         }
         public partial class kehoach_TH : Models.Core.Kehoach_TB
         {
-            public string kehoachtb_id { get; set; }
+
+            // public string kehoachtb_id { get; set; }
+            public DateTime? ngay_th { get; set; }
             public int ket_qua { get; set; }
+            public string de_xuat { get; set; }
+            public string lydo { get; set; }
+            public string ghichu_th { get; set; }
+            public string nguoi_cn_th { get; set; }
+            public string ip_cn_th { get; set; }
+            public string ngay_cn_th { get; set; }
         }
     }
 }
