@@ -28,15 +28,15 @@ namespace VNPTBKN.API.Controllers
                 if (paging.is_export)
                 {
                     qry = "select dv.ten_dv,gr.title nhom_kh,tb.ma_tb,tb.ten_tb,tb.diachi_tb,tb.so_dt,tb.ma_nd,tb.ghichu,tb.nguoi_nhap,to_char(tb.ngay_nhap,'MM/DD/YYYY')ngay_nhap,";
-                    qry += "decode(th.ket_qua,1,'Thành công',2,'Không thành công','Chưa thực hiện')ket_qua,th.de_xuat,lydo.title lydo,th.ghichu ghichu_th,to_char(th.ngay_th,'MM/DD/YYYY')ngay_th,th.nguoi_cn nguoi_th,th.ip_cn ip_th ";
-                    qry += "from kehoach_tb tb,kehoach_th th,items lydo,groups gr,admin_bkn.donvi dv ";
-                    qry += $"where tb.id=th.kehoachtb_id(+) and th.lydo=lydo.id(+) and tb.nhom_kh=gr.id and tb.donvi_id=dv.donvi_id and tb.trang_thai in({paging.flag})";
+                    qry += "decode(th.ket_qua,1,'Thành công',2,'Không thành công','Chưa thực hiện')ket_qua,th.de_xuat,goicuoc.title goicuoc,lydo.title lydo,th.ghichu ghichu_th,to_char(th.ngay_th,'MM/DD/YYYY')ngay_th,th.nguoi_cn nguoi_th,th.ip_cn ip_th ";
+                    qry += "from kehoach_tb tb,kehoach_th th,items lydo,items goicuoc,groups gr,admin_bkn.donvi dv ";
+                    qry += $"where tb.id=th.kehoachtb_id(+) and th.lydo=lydo.id(+) and th.goicuoc=goicuoc.id(+) and tb.nhom_kh=gr.id and tb.donvi_id=dv.donvi_id and tb.trang_thai in({paging.flag})";
                 }
                 else
                 {
-                    qry = "select tb.*,th.ngay_th,th.ket_qua,th.de_xuat,lydo.title lydo,th.ghichu ghichu_th,th.nguoi_cn nguoi_cn_th,th.ip_cn ip_cn_th,th.ngay_cn ngay_cn_th ";
-                    qry += "from kehoach_tb tb,kehoach_th th,items lydo ";
-                    qry += $"where tb.id=th.kehoachtb_id(+) and th.lydo=lydo.id(+) and tb.trang_thai in({paging.flag})";
+                    qry = "select tb.*,th.ngay_th,th.ket_qua,th.de_xuat,goicuoc.title goicuoc,lydo.title lydo,th.ghichu ghichu_th,th.nguoi_cn nguoi_cn_th,th.ip_cn ip_cn_th,th.ngay_cn ngay_cn_th ";
+                    qry += "from kehoach_tb tb,kehoach_th th,items lydo,items goicuoc ";
+                    qry += $"where tb.id=th.kehoachtb_id(+) and th.lydo=lydo.id(+) and th.goicuoc=goicuoc.id(+) and tb.trang_thai in({paging.flag})";
                 }
                 if (paging.flag == 2 && paging.ket_qua != null)
                     qry += $" and th.ket_qua in({paging.ket_qua})";
@@ -247,7 +247,7 @@ namespace VNPTBKN.API.Controllers
             {
                 var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
                 if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = $"select * from items where app_key='lydo' and code='{id}'";
+                var qry = $"select * from items where app_key in('lydo','goicuoc') and code='{id}' order by orders";
                 var data = await db.Connection().QueryAsync<Models.Core.Items>(qry);
                 return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
@@ -619,6 +619,7 @@ namespace VNPTBKN.API.Controllers
             public DateTime? ngay_th { get; set; }
             public int ket_qua { get; set; }
             public string de_xuat { get; set; }
+            public string goicuoc { get; set; }
             public string lydo { get; set; }
             public string ghichu_th { get; set; }
             public string nguoi_cn_th { get; set; }
