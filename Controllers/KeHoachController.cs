@@ -269,8 +269,9 @@ namespace VNPTBKN.API.Controllers
                 //         ip_huy='{TM.Core.HttpContext.Header("LocalIP")}',ngay_huy={DateTime.Now.ParseDateTime()}
                 //         where nhom_kh={req.nhomkh_id} and thang_bd={req.thang_bd} and donvi_id={req.donvi_id} and trang_thai=1";
                 // await db.Connection().QueryAsync(qry);
-
-                var qry = "";
+                // Get kehoach_tb check
+                var qry = $"select ma_tb from kehoach_tb where nhom_kh={req.nhomkh_id} and donvi_id={req.donvi_id}";
+                var kehoach_tb = await db.Connection().QueryAsync<Models.Core.Kehoach_TB>(qry);
                 var data = new Models.Core.Kehoach_TB();
                 var csv = TM.Core.IO.ReadFile(req.file_upload, '\t');
                 var error = new List<template_import>();
@@ -297,9 +298,8 @@ namespace VNPTBKN.API.Controllers
                         data.ip_nhap = TM.Core.HttpContext.Header("LocalIP");
                         data.trang_thai = 1;
                         // Nếu đã có thuê bao thì bỏ qua
-                        qry = $"select ma_tb from kehoach_tb where nhom_kh={req.nhomkh_id} and donvi_id={req.donvi_id} and ma_tb='{data.ma_tb}'";
-                        var tmp = await db.Connection().QueryFirstOrDefaultAsync(qry);
-                        if (tmp != null)
+                        //var tmp = kehoach_tb.Any(b => b.ma_tb==data.ma_tb);
+                        if (kehoach_tb.Any(b => b.ma_tb == data.ma_tb))
                         {
                             ImportData(error, csv, index, "Trùng thuê bao");
                             continue;
@@ -337,6 +337,27 @@ namespace VNPTBKN.API.Controllers
                     error = error,
                     msg = TM.Core.Common.Message.success.ToString()
                 });
+            }
+            catch (System.Exception)
+            {
+                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
+            }
+        }
+        [HttpPost("[action]/{ma_nd}")]
+        public async Task<IActionResult> updateNVTB(string ma_nd, [FromBody]  List<Models.Core.Kehoach_TB> tb)
+        {
+            try
+            {
+                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                var now = DateTime.Now;
+                var qry = "BEGIN ";
+                foreach (var item in tb)
+                    qry += $"update kehoach_tb set ma_nd='{ma_nd}',ip_cn='{TM.Core.HttpContext.Header("LocalIP")}',nguoi_cn='{nd.ma_nd}',ngay_cn={now.ParseDateTime()} where id='{item.id}';\r\n";
+                qry += "END;";
+                await db.Connection().QueryAsync(qry);
+                await db.Connection().QueryAsync("COMMIT");
+                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception)
             {
