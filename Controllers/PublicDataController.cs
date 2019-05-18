@@ -21,9 +21,12 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var qry = $"select * from Languages";
-                var data = await db.Connection().QueryAsync(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var qry = $"select * from Languages";
+                    var data = await db.Connection.QueryAsync(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -33,9 +36,12 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var qry = $"select module_code,key,value from Dictionary where lower(lang_code)='{key.ToLower()}' order by lang_code,module_code,key";
-                var data = await db.Connection().QueryAsync<Dictionary>(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var qry = $"select module_code,key,value from Dictionary where lower(lang_code)='{key.ToLower()}' order by lang_code,module_code,key";
+                    var data = await db.Connection.QueryAsync<Dictionary>(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -45,9 +51,12 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var qry = $"select * from Modules";
-                var data = await db.Connection().QueryAsync(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var qry = $"select * from Modules";
+                    var data = await db.Connection.QueryAsync(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -57,9 +66,12 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var qry = $"select * from Navigation";
-                var data = await db.Connection().QueryAsync<Navigation>(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var qry = $"select * from Navigation";
+                    var data = await db.Connection.QueryAsync<Navigation>(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }

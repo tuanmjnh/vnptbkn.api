@@ -18,13 +18,16 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = "select * from db_donvi_ttkd ";
-                if (paging.ma_dvi > 0) qry += " and db.ma_dvi>0";
-                qry += "order by ma_dvi";
-                var data = await db.Connection().QueryAsync<Models.Core.DBDonvi>(qry); // await db.Connection().GetAllAsync<Models.Core.DBDonvi>();
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    var qry = "select * from db_donvi_ttkd ";
+                    if (paging.ma_dvi > 0) qry += " and db.ma_dvi>0";
+                    qry += "order by ma_dvi";
+                    var data = await db.Connection.QueryAsync<Models.Core.DBDonvi>(qry); // await db.Connection.GetAllAsync<Models.Core.DBDonvi>();
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -34,8 +37,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var data = await db.Connection().GetAsync<Models.Core.DBDonvi>(id);
-                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var data = await db.Connection.GetAsync<Models.Core.DBDonvi>(id);
+                    return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -45,8 +51,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                await db.Connection().InsertOraAsync(data);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    await db.Connection.InsertOraAsync(data);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -56,23 +65,26 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var _data = await db.Connection().GetAsync<Models.Core.DBDonvi>(data.donvi_id);
-                if (_data != null)
+                using (var db = new TM.Core.Connection.Oracle())
                 {
-                    // _data.app_key = data.app_key;
-                    // _data.full_name = data.full_name;
-                    // _data.mobile = data.mobile;
-                    // _data.email = data.email;
-                    // _data.address = data.address;
-                    // _data.descs = data.descs;
-                    // _data.images = data.images;
-                    // _data.donvi_id = data.donvi_id;
-                    // _data.roles_id = data.roles_id;
-                    // _data.updated_by = TM.Core.HttpContext.Header();
-                    // _data.updated_at = DateTime.Now;
+                    var _data = await db.Connection.GetAsync<Models.Core.DBDonvi>(data.donvi_id);
+                    if (_data != null)
+                    {
+                        // _data.app_key = data.app_key;
+                        // _data.full_name = data.full_name;
+                        // _data.mobile = data.mobile;
+                        // _data.email = data.email;
+                        // _data.address = data.address;
+                        // _data.descs = data.descs;
+                        // _data.images = data.images;
+                        // _data.donvi_id = data.donvi_id;
+                        // _data.roles_id = data.roles_id;
+                        // _data.updated_by = TM.Core.HttpContext.Header();
+                        // _data.updated_at = DateTime.Now;
+                    }
+                    await db.Connection.UpdateAsync(_data);
+                    return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
                 }
-                await db.Connection().UpdateAsync(_data);
-                return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -84,7 +96,7 @@ namespace VNPTBKN.API.Controllers
         //     foreach (var item in data)
         //       qry += $"update Users set flag={item.flag} where id='{item.user_id}';\r\n";
         //     qry += "END;";
-        //     await db.Connection().QueryAsync(qry);
+        //     await db.Connection.QueryAsync(qry);
         //     return Json(new { msg = "success" });
         //   } catch (System.Exception) { return Json(new {msg = TM.Core.Common.Message.danger.ToString() }); }
         // }
@@ -92,7 +104,7 @@ namespace VNPTBKN.API.Controllers
         // [HttpPut("[action]")]
         // public async Task<IActionResult> Remove([FromBody] List<Models.Core.DBDonvi> data) {
         //   try {
-        //     if (data.Count > 0) await db.Connection().DeleteAsync(data);
+        //     if (data.Count > 0) await db.Connection.DeleteAsync(data);
         //     return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
         //   } catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         // }

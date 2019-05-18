@@ -6,6 +6,7 @@ namespace VNPTBKN.API.Common
 {
     public static class db
     {
+        public static Oracle.ManagedDataAccess.Client.OracleConnection _connection;
         public static OracleConnection Connection(string connectionString = "TTKD_BKN")
         {
             try
@@ -17,10 +18,34 @@ namespace VNPTBKN.API.Common
                 //     var db = new TM.Core.Connection.Oracle(connectionString);
                 //     return db.Connection;
                 // }
-                var db = new TM.Core.Connection.Oracle(connectionString);
-                return db.Connection;
+                // if (_connection == null)
+                _connection = new TM.Core.Connection.Oracle(connectionString).Connection;
+                if (_connection.State == System.Data.ConnectionState.Closed)
+                    _connection.Open();
+                return _connection;
             }
             catch (System.Exception) { throw; }
+        }
+        public static void Open()
+        {
+            try
+            {
+                if (_connection != null && _connection.State == System.Data.ConnectionState.Closed)
+                    _connection.Open();
+            }
+            catch (Exception) { throw; }
+        }
+        public static void Close()
+        {
+            try
+            {
+                if (_connection != null && _connection.State == System.Data.ConnectionState.Open)
+                {
+                    _connection.Close();
+                    // Connection.Dispose();
+                }
+            }
+            catch (Exception) { throw; }
         }
         public static Boolean isExist(this OracleConnection con, string table, string column, string value, string condition = "")
         {
@@ -38,11 +63,16 @@ namespace VNPTBKN.API.Common
         }
         public static nguoidung getUserFromToken(this OracleConnection con, string token)
         {
-            var qry = "select nd.*,nv.*,dv.ten_dv,dv.ma_dv,r.name ten_quyen,r.levels cap_quyen,r.code ma_quyen,r.roles quyen ";
-            qry += "from ttkd_bkn.nguoidung nda,ttkd_bkn.roles r,admin_bkn.nguoidung nd,admin_bkn.nhanvien nv,ttkd_bkn.db_donvi dv ";
-            qry += "where nda.roles_id=r.id and nda.nguoidung_id=nd.nguoidung_id and nd.nhanvien_id=nv.nhanvien_id and nv.donvi_id=dv.donvi_id(+) ";
-            qry += $"and nda.token='{token.Replace("Bearer ", "")}'";
-            return con.QueryFirstOrDefault<nguoidung>(qry);
+            try
+            {
+                var qry = "select nd.*,nv.*,dv.ten_dv,dv.ma_dv,r.name ten_quyen,r.levels cap_quyen,r.code ma_quyen,r.roles quyen ";
+                qry += "from ttkd_bkn.nguoidung nda,ttkd_bkn.roles r,admin_bkn.nguoidung nd,admin_bkn.nhanvien nv,ttkd_bkn.db_donvi dv ";
+                qry += "where nda.roles_id=r.id and nda.nguoidung_id=nd.nguoidung_id and nd.nhanvien_id=nv.nhanvien_id and nv.donvi_id=dv.donvi_id(+) ";
+                qry += $"and nda.token='{token.Replace("Bearer ", "")}'";
+                return con.QueryFirstOrDefault<nguoidung>(qry);
+            }
+            catch (System.Exception) { throw; }
+            finally { }
         }
         public static bool inRoles(this nguoidung nd, string roles)
         {

@@ -42,43 +42,44 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                // var Authorization = TM.Core.HttpContext.Http.Request.Headers.TryGetValue("Authorization", out authorizationToken); ;
-                // var Author = TM.Core.HttpContext.Http.Request.Headers["Author"].ToString();
-                // db_nguoidung
-                var qry = $"select nd.*,css_bkn.giaima_mk(nd.matkhau)giaima_mk from ttkd_bkn.db_nguoidung nd where ma_nd='{data.ma_nd}'";
-                var DBNguoidung = await db.Connection("DHSX").QueryFirstOrDefaultAsync<Authentication.Core.DBNguoidung>(qry);
-                if (DBNguoidung == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
-                // nguoidung
-                qry = $"select db.*,nd.*,r.roles from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.nguoidung_id={DBNguoidung.nguoidung_id}";
-                var user = await db.Connection().QueryFirstOrDefaultAsync<Authentication.Core.nguoidung_auth>(qry);
-                if (user == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
+                using (var db = new TM.Core.Connection.Oracle("DHSX"))
+                {
+                    // var Authorization = TM.Core.HttpContext.Http.Request.Headers.TryGetValue("Authorization", out authorizationToken); ;
+                    // var Author = TM.Core.HttpContext.Http.Request.Headers["Author"].ToString();
+                    // db_nguoidung
+                    var qry = $"select nd.*,css_bkn.giaima_mk(nd.matkhau)giaima_mk from ttkd_bkn.db_nguoidung nd where ma_nd='{data.ma_nd}'";
+                    var DBNguoidung = await db.Connection.QueryFirstOrDefaultAsync<Authentication.Core.DBNguoidung>(qry);
+                    if (DBNguoidung == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
+                    // nguoidung
+                    qry = $"select db.*,nd.*,r.roles from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.nguoidung_id={DBNguoidung.nguoidung_id}";
+                    var user = await db.Connection.QueryFirstOrDefaultAsync<Authentication.Core.nguoidung_auth>(qry);
+                    if (user == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
 
-                // Password wrong
-                // if (user.matkhau != TM.Core.Encrypt.MD5.CryptoMD5TM(data.matkhau + user.salt))
-                //     return Json(new { msg = TM.Core.Common.Message.wrong.ToString() });
-                if (DBNguoidung.giaima_mk != data.matkhau)
-                    return Json(new { msg = TM.Core.Common.Message.wrong.ToString() });
+                    // Password wrong
+                    // if (user.matkhau != TM.Core.Encrypt.MD5.CryptoMD5TM(data.matkhau + user.salt))
+                    //     return Json(new { msg = TM.Core.Common.Message.wrong.ToString() });
+                    if (DBNguoidung.giaima_mk != data.matkhau)
+                        return Json(new { msg = TM.Core.Common.Message.wrong.ToString() });
 
-                //Account is locked
-                if (DBNguoidung.trangthai < 1)
-                    return Json(new { msg = TM.Core.Common.Message.locked.ToString() });
-                // Roles
-                // qry = $"select * from user_role where user_id='{user.user_id}'";
-                // var roles = await db.Connection().QueryAsync(qry);
-                // Token
-                user.token = BuildToken(user);
-                //Update last login
-                user.last_login = DateTime.Now;
-                user.matkhau = "";
-                qry = $"update ttkd_bkn.nguoidung set last_login={user.last_login.Value.ParseDateTime()},token='{user.token}' where nguoidung_id={user.nguoidung_id}";
-                await db.Connection().QueryAsync(qry);
-                //await db.Connection().UpdateAsync(user);
-                return Json(new { data = user, msg = TM.Core.Common.Message.success.ToString() });
+                    //Account is locked
+                    if (DBNguoidung.trangthai < 1)
+                        return Json(new { msg = TM.Core.Common.Message.locked.ToString() });
+                    // Roles
+                    // qry = $"select * from user_role where user_id='{user.user_id}'";
+                    // var roles = await db.Connection().QueryAsync(qry);
+                    // Token
+                    user.token = BuildToken(user);
+                    //Update last login
+                    user.last_login = DateTime.Now;
+                    user.matkhau = "";
+                    qry = $"update ttkd_bkn.nguoidung set last_login={user.last_login.Value.ParseDateTime()},token='{user.token}' where nguoidung_id={user.nguoidung_id}";
+                    await db.Connection.QueryAsync(qry);
+                    //await db.Connection().UpdateAsync(user);
+                    return Json(new { data = user, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
-            catch (System.Exception)
-            {
-                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
-            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+            finally { }
         }
         private string BuildToken(Authentication.Core.nguoidung_auth user)
         {
@@ -101,10 +102,8 @@ namespace VNPTBKN.API.Controllers
                 var _data = "tuanmjnh";
                 return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception)
-            {
-                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
-            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+            finally { }
         }
     }
 }

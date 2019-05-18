@@ -19,8 +19,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var data = await db.Connection().GetAllAsync<Models.Core.Dictionary>();
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var data = await db.Connection.GetAllAsync<Models.Core.Dictionary>();
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -30,12 +33,15 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var tmp = key.Trim(',').Split(',');
-                key = "";
-                foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from Dictionary where lower(lang_code) in({key.Trim(',').ToLower()}) order by lang_code,module_code,key";
-                var data = await db.Connection().QueryAsync<Models.Core.Dictionary>(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var tmp = key.Trim(',').Split(',');
+                    key = "";
+                    foreach (var item in tmp) key += $"'{item}',";
+                    var qry = $"select * from Dictionary where lower(lang_code) in({key.Trim(',').ToLower()}) order by lang_code,module_code,key";
+                    var data = await db.Connection.QueryAsync<Models.Core.Dictionary>(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -45,12 +51,15 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var tmp = key.Trim(',').Split(',');
-                key = "";
-                foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from Dictionary where lower(module_code) in({key.Trim(',').ToLower()})";
-                var data = await db.Connection().QueryAsync<Models.Core.Dictionary>(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var tmp = key.Trim(',').Split(',');
+                    key = "";
+                    foreach (var item in tmp) key += $"'{item}',";
+                    var qry = $"select * from Dictionary where lower(module_code) in({key.Trim(',').ToLower()})";
+                    var data = await db.Connection.QueryAsync<Models.Core.Dictionary>(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -60,12 +69,15 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var tmp = key.Trim(',').Split(',');
-                key = "";
-                foreach (var item in tmp) key += $"'{item}',";
-                var qry = $"select * from Dictionary where lower(key) in({key.Trim(',').ToLower()})";
-                var data = await db.Connection().QueryAsync<Models.Core.Dictionary>(qry);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var tmp = key.Trim(',').Split(',');
+                    key = "";
+                    foreach (var item in tmp) key += $"'{item}',";
+                    var qry = $"select * from Dictionary where lower(key) in({key.Trim(',').ToLower()})";
+                    var data = await db.Connection.QueryAsync<Models.Core.Dictionary>(qry);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -75,8 +87,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var data = await db.Connection().GetAsync<Models.Core.Dictionary>(id);
-                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var data = await db.Connection.GetAsync<Models.Core.Dictionary>(id);
+                    return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -86,30 +101,30 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
-                // var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}'";
-                var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Dictionary>(qry);
-                if (_data != null)
+                using (var db = new TM.Core.Connection.Oracle())
                 {
-                    _data.module_code = data.module_code;
-                    _data.key = data.key;
-                    _data.value = data.value;
-                    //_data.lang_data = data.lang_data;
-                    await db.Connection().UpdateAsync(_data);
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
+                    // var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}'";
+                    var _data = await db.Connection.QueryFirstOrDefaultAsync<Models.Core.Dictionary>(qry);
+                    if (_data != null)
+                    {
+                        _data.module_code = data.module_code;
+                        _data.key = data.key;
+                        _data.value = data.value;
+                        //_data.lang_data = data.lang_data;
+                        await db.Connection.UpdateAsync(_data);
+                    }
+                    else
+                    {
+                        data.id = db.Connection.getID("Dictionary");
+                        await db.Connection.InsertOraAsync(data);
+                    }
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
                 }
-                else
-                {
-                    data.id = db.Connection().getID("Dictionary");
-                    await db.Connection().InsertOraAsync(data);
-                }
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
             }
-            catch (System.Exception)
-            {
-                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
-            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPut, Microsoft.AspNetCore.Authorization.Authorize]
@@ -117,23 +132,26 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
-                // var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}'";
-                var _data = await db.Connection().QueryFirstOrDefaultAsync<Models.Core.Dictionary>(qry);
-                if (_data == null)
-                    _data = await db.Connection().GetAsync<Models.Core.Dictionary>(data.id);
-                if (_data != null)
+                using (var db = new TM.Core.Connection.Oracle())
                 {
-                    _data.module_code = data.module_code;
-                    _data.key = data.key;
-                    _data.value = data.value;
-                    // _data.lang_data = data.lang_data;
-                    await db.Connection().UpdateAsync(_data);
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}' and lower(module_code)='{data.module_code.ToLower()}' and lower(key)='{data.key.ToLower()}'";
+                    // var qry = $"select * from Dictionary where lower(lang_code)='{data.lang_code.ToLower()}'";
+                    var _data = await db.Connection.QueryFirstOrDefaultAsync<Models.Core.Dictionary>(qry);
+                    if (_data == null)
+                        _data = await db.Connection.GetAsync<Models.Core.Dictionary>(data.id);
+                    if (_data != null)
+                    {
+                        _data.module_code = data.module_code;
+                        _data.key = data.key;
+                        _data.value = data.value;
+                        // _data.lang_data = data.lang_data;
+                        await db.Connection.UpdateAsync(_data);
+                    }
+                    else await db.Connection.InsertOraAsync(data);
+                    return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
                 }
-                else await db.Connection().InsertOraAsync(data);
-                return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -143,15 +161,18 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = "BEGIN ";
-                foreach (var item in data)
-                    qry += $"delete Dictionary where id='{item.id}';\r\n";
-                qry += "END;";
-                await db.Connection().QueryAsync(qry);
-                await db.Connection().QueryAsync("COMMIT");
-                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    var qry = "BEGIN ";
+                    foreach (var item in data)
+                        qry += $"delete Dictionary where id='{item.id}';\r\n";
+                    qry += "END;";
+                    await db.Connection.QueryAsync(qry);
+                    await db.Connection.QueryAsync("COMMIT");
+                    return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -161,8 +182,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                if (data.Count > 0) await db.Connection().DeleteAsync(data);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    if (data.Count > 0) await db.Connection.DeleteAsync(data);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -172,8 +196,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                await db.Connection().GetAllAsync<Models.Core.Dictionary>();
-                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    await db.Connection.GetAllAsync<Models.Core.Dictionary>();
+                    return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }

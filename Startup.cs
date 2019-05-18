@@ -37,8 +37,7 @@ namespace VNPTBKN.API {
             // Authentication JwtBearer
             var Issuer = new System.Collections.Generic.List<string>() {
                 "http://localhost:4200/",
-                "http://10.17.20.99/portal",
-                "http://10.17.20.99/portalspa"
+                "http://10.17.20.99/portal"
             };
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options => {

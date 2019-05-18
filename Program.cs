@@ -16,7 +16,7 @@ namespace VNPTBKN.API {
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-            .UseUrls("http://localhost:5000/")
+            .UseUrls("http://localhost:5000/","http://10.17.20.199:5000")
             .UseStartup<Startup>();
     }
 }

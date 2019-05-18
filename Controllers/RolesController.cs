@@ -19,8 +19,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var data = await db.Connection().GetAllAsync<Authentication.Core.Roles>();
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var data = await db.Connection.GetAllAsync<Authentication.Core.Roles>();
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -30,8 +33,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var data = await db.Connection().GetAsync<Authentication.Core.Roles>(id);
-                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var data = await db.Connection.GetAsync<Authentication.Core.Roles>(id);
+                    return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -41,18 +47,18 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                data.id = Guid.NewGuid().ToString("N");
-                data.created_by = nd.ma_nd;
-                data.created_at = DateTime.Now;
-                await db.Connection().InsertOraAsync(data);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    data.id = Guid.NewGuid().ToString("N");
+                    data.created_by = nd.ma_nd;
+                    data.created_at = DateTime.Now;
+                    await db.Connection.InsertOraAsync(data);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
-            catch (System.Exception)
-            {
-                return Json(new { msg = TM.Core.Common.Message.danger.ToString() });
-            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
 
         [HttpPut]
@@ -60,24 +66,27 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var _data = await db.Connection().GetAsync<Authentication.Core.Roles>(data.id);
-                if (_data != null)
+                using (var db = new TM.Core.Connection.Oracle())
                 {
-                    _data.name = data.name;
-                    // _data.code = data.code;
-                    _data.levels = data.levels;
-                    _data.roles = data.roles;
-                    _data.orders = data.orders;
-                    _data.descs = data.descs;
-                    _data.updated_by = nd.ma_nd;
-                    _data.updated_at = DateTime.Now;
-                    _data.flag = data.flag;
-                    _data.color = data.color;
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    var _data = await db.Connection.GetAsync<Authentication.Core.Roles>(data.id);
+                    if (_data != null)
+                    {
+                        _data.name = data.name;
+                        // _data.code = data.code;
+                        _data.levels = data.levels;
+                        _data.roles = data.roles;
+                        _data.orders = data.orders;
+                        _data.descs = data.descs;
+                        _data.updated_by = nd.ma_nd;
+                        _data.updated_at = DateTime.Now;
+                        _data.flag = data.flag;
+                        _data.color = data.color;
+                    }
+                    await db.Connection.UpdateAsync(_data);
+                    return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
                 }
-                await db.Connection().UpdateAsync(_data);
-                return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -87,15 +96,18 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                var nd = db.Connection().getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
-                if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
-                var qry = "BEGIN ";
-                foreach (var item in data)
-                    qry += $"update roles set flag={item.flag},deleted_by='{nd.ma_nd}',deleted_at={DateTime.Now.ParseDateTime()} where id='{item.id}';\r\n";
-                qry += "END;";
-                await db.Connection().QueryAsync(qry);
-                await db.Connection().QueryAsync("COMMIT");
-                return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    var qry = "BEGIN ";
+                    foreach (var item in data)
+                        qry += $"update roles set flag={item.flag},deleted_by='{nd.ma_nd}',deleted_at={DateTime.Now.ParseDateTime()} where id='{item.id}';\r\n";
+                    qry += "END;";
+                    await db.Connection.QueryAsync(qry);
+                    await db.Connection.QueryAsync("COMMIT");
+                    return Json(new { msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -105,8 +117,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                if (data.Count > 0) await db.Connection().DeleteAsync(data);
-                return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    if (data.Count > 0) await db.Connection.DeleteAsync(data);
+                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
@@ -116,8 +131,11 @@ namespace VNPTBKN.API.Controllers
         {
             try
             {
-                await db.Connection().GetAllAsync<Authentication.Core.Roles>();
-                return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    await db.Connection.GetAllAsync<Authentication.Core.Roles>();
+                    return Json(new { data = id, msg = TM.Core.Common.Message.success.ToString() });
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
         }
