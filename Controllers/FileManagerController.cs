@@ -24,12 +24,12 @@ namespace VNPTBKN.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(string basePath = "Uploads", string subPath = "", string extension = "")
+        public IActionResult Get(string subPath = "", string extension = "")
         {
             try
             {
                 var data = new List<FileManagerObject>();
-                var path = $"{basePath}";
+                var path = $"{TM.Core.HttpContext.Http.Request.Headers["path"].ToString()}";
                 if (subPath.Length > 0) path = $"{path}/{subPath}";
                 var Dir = new DirectoryInfo($"{rootPath}/{path}"); // collection["path"].ToString()
                 TM.Core.IO.CreateDirectory($"{rootPath}/{path}");
@@ -39,7 +39,7 @@ namespace VNPTBKN.API.Controllers
                     var _file = new FileManagerObject();
                     _file.id = Guid.NewGuid().ToString("N");
                     _file.parent = "";
-                    _file.root = basePath;
+                    _file.root = TM.Core.HttpContext.Http.Request.Headers["path"].ToString();
                     _file.sub_directory = subPath;
                     _file.levels = 0;
                     _file.name = item.Name;
@@ -68,7 +68,7 @@ namespace VNPTBKN.API.Controllers
                     var _file = new FileManagerObject();
                     _file.id = Guid.NewGuid().ToString("N");
                     _file.parent = "";
-                    _file.root = basePath;
+                    _file.root = TM.Core.HttpContext.Http.Request.Headers["path"].ToString();
                     _file.sub_directory = subPath;
                     _file.levels = 0;
                     _file.name = item.Name;
@@ -106,7 +106,7 @@ namespace VNPTBKN.API.Controllers
             {
                 var rs = new List<FileManagerObject>();
                 var files = collection.Files;
-                var basePath = collection["basePath"].ToString();
+                var basePath = TM.Core.HttpContext.Http.Request.Headers["path"].ToString();
                 basePath = string.IsNullOrEmpty(basePath) ? "Uploads" : basePath;
                 var subPath = collection["subPath"].ToString().Trim('/');
                 if (files.Count > 0)

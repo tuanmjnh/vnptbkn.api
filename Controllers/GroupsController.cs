@@ -92,6 +92,7 @@ namespace VNPTBKN.API.Controllers
                     var qry = $"select * from Groups where flag in(1)";
                     if (!string.IsNullOrEmpty(key)) qry += $" and app_key in('{key}')";
                     if (!string.IsNullOrEmpty(code)) qry += $" and code in('{code}')";
+                    qry += " order by orders";
                     var data = await db.Connection.QueryAsync<Models.Core.Groups>(qry);
                     return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
                 }

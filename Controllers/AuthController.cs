@@ -44,44 +44,50 @@ namespace VNPTBKN.API.Controllers
             {
                 using (var db = new TM.Core.Connection.Oracle("DHSX"))
                 {
-                    // var Authorization = TM.Core.HttpContext.Http.Request.Headers.TryGetValue("Authorization", out authorizationToken); ;
+                    // var Authorization = TM.Core.HttpContext.Http.Request.Headers.TryGetValue("Authorization", out authorizationToken);
                     // var Author = TM.Core.HttpContext.Http.Request.Headers["Author"].ToString();
                     // db_nguoidung
-                    var qry = $"select nd.*,css_bkn.giaima_mk(nd.matkhau)giaima_mk from ttkd_bkn.db_nguoidung nd where ma_nd='{data.ma_nd}'";
-                    var DBNguoidung = await db.Connection.QueryFirstOrDefaultAsync<Authentication.Core.DBNguoidung>(qry);
-                    if (DBNguoidung == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
-                    // nguoidung
-                    qry = $"select db.*,nd.*,r.roles from ttkd_bkn.db_nguoidung db,ttkd_bkn.nguoidung nd,ttkd_bkn.roles r where db.nguoidung_id=nd.nguoidung_id(+) and nd.roles_id=r.id(+) and db.nguoidung_id={DBNguoidung.nguoidung_id}";
-                    var user = await db.Connection.QueryFirstOrDefaultAsync<Authentication.Core.nguoidung_auth>(qry);
-                    if (user == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
+                    var qry = "select nd.nguoidung_id \"nguoidung_id\",";
+                    qry += "nd.ma_nd \"ma_nd\",";
+                    qry += "nd.matkhau \"matkhau\",";
+                    qry += "css_bkn.giaima_mk(nd.matkhau) \"giaima_mk\",";
+                    qry += "nd.trangthai \"trangthai\" ";
+                    qry += "from admin_bkn.nguoidung nd,";
+                    qry += "ttkd_bkn.nguoidung tnd,";
+                    qry += "ttkd_bkn.roles r ";
+                    qry += "where nd.nguoidung_id=tnd.nguoidung_id(+) ";
+                    qry += "and tnd.roles_id=r.id(+) ";
+                    qry += $"and nd.ma_nd=:ma_nd";
+                    var nguoidung = await db.Connection.QueryFirstOrDefaultAsync(qry, new { ma_nd = data.ma_nd });
+                    if (nguoidung == null) return Json(new { msg = TM.Core.Common.Message.exist.ToString() });
 
                     // Password wrong
                     // if (user.matkhau != TM.Core.Encrypt.MD5.CryptoMD5TM(data.matkhau + user.salt))
                     //     return Json(new { msg = TM.Core.Common.Message.wrong.ToString() });
-                    if (DBNguoidung.giaima_mk != data.matkhau)
+                    if (nguoidung.giaima_mk != data.matkhau)
                         return Json(new { msg = TM.Core.Common.Message.wrong.ToString() });
 
                     //Account is locked
-                    if (DBNguoidung.trangthai < 1)
+                    if (nguoidung.trangthai < 1)
                         return Json(new { msg = TM.Core.Common.Message.locked.ToString() });
                     // Roles
                     // qry = $"select * from user_role where user_id='{user.user_id}'";
                     // var roles = await db.Connection().QueryAsync(qry);
                     // Token
-                    user.token = BuildToken(user);
+                    nguoidung.token = BuildToken();
                     //Update last login
-                    user.last_login = DateTime.Now;
-                    user.matkhau = "";
-                    qry = $"update ttkd_bkn.nguoidung set last_login={user.last_login.Value.ParseDateTime()},token='{user.token}' where nguoidung_id={user.nguoidung_id}";
+                    // nguoidung.last_login = DateTime.Now;
+                    qry = $"update ttkd_bkn.nguoidung set last_login={DateTime.Now.ParseDateTime()},token='{nguoidung.token}' where nguoidung_id={nguoidung.nguoidung_id}";
                     await db.Connection.QueryAsync(qry);
+                    var user = await db.Connection.QueryFirstOrDefaultAsync(userQuery(), new { nguoidung_id = nguoidung.nguoidung_id });
                     //await db.Connection().UpdateAsync(user);
-                    return Json(new { data = user, msg = TM.Core.Common.Message.success.ToString() });
+                    return Json(user);
                 }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
             finally { }
         }
-        private string BuildToken(Authentication.Core.nguoidung_auth user)
+        private string BuildToken()
         {
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -94,16 +100,30 @@ namespace VNPTBKN.API.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        [HttpGet]
-        public IActionResult Get(string id)
+        [HttpGet("{id:int}"), Microsoft.AspNetCore.Authorization.AllowAnonymous]
+        public async Task<IActionResult> Get(int id)
         {
             try
             {
-                var _data = "tuanmjnh";
-                return Json(new { data = _data, msg = TM.Core.Common.Message.success.ToString() });
+                using (var db = new TM.Core.Connection.Oracle("DHSX"))
+                {
+                    var user = await db.Connection.QueryFirstOrDefaultAsync(userQuery(), new { nguoidung_id = id });
+                    return Json(user);
+                }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
             finally { }
+        }
+
+        private string userQuery()
+        {
+            var qry = "select nd.nguoidung_id \"nguoidung_id\",nd.ma_nd \"ma_nd\",nd.ten_nd \"ten_nd\",nd.quantri \"quantri\",";
+            qry += "nd.nhanvien_id \"nhanvien_id\",nd.nhom_nd_id \"nhom_nd_id\",nd.trangthai \"trangthai\",nd.ngoaile \"ngoaile\",";
+            qry += "nv.ma_nv \"ma_nv\",nv.ten_nv \"ten_nv\",nv.diachi_nv \"diachi_nv\",nv.so_dt \"so_dt\",nv.gioitinh \"gioitinh\",";
+            qry += "nv.chucdanh \"chucdanh\",nv.ngay_sn \"ngay_sn\",nv.ten_tn \"ten_tn\",tnd.token \"token\",r.name \"ten_quyen\",r.roles \"quyen\" ";
+            qry += "from admin_bkn.nguoidung nd,admin_bkn.nhanvien nv,ttkd_bkn.nguoidung tnd,ttkd_bkn.roles r ";
+            qry += $"where nd.nguoidung_id=tnd.nguoidung_id(+) and nd.nhanvien_id=nv.nhanvien_id and tnd.roles_id=r.id(+) and nd.nguoidung_id=:nguoidung_id";
+            return qry;
         }
     }
 }

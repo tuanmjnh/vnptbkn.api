@@ -43,16 +43,16 @@ namespace VNPTBKN.API.Controllers
                     if (paging.flag == 2 && paging.ket_qua != null)
                         qry += $" and th.ket_qua in({paging.ket_qua})";
                     // Đơn vị
-                    if (nd.inRoles("donvi.select") && paging.donvi_id != null && paging.donvi_id.Count > 0)
+                    if (nd.inRoles("donvi.select") && paging.donvi_id > 0)
                         qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
                     else
                         qry += $" and tb.donvi_id in({nd.donvi_id})";
 
                     if (nd.inRoles("nguoidung.select"))
                     {
-                        if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
+                        if (!string.IsNullOrEmpty(paging.ma_nd))
                         {
-                            if (paging.ma_nd[0] != "$all") qry += $" and tb.ma_nd in('{String.Join("','", paging.ma_nd)}')";
+                            if (paging.ma_nd != "0") qry += $" and tb.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                         }
                         else qry += $" and tb.ma_nd is null";
                     }
@@ -60,7 +60,7 @@ namespace VNPTBKN.API.Controllers
                         qry += $" and tb.ma_nd='{nd.ma_nd}'";
 
                     // Nhóm kế hoạch
-                    if (paging.nhomkh_id != null && paging.nhomkh_id.Count > 0)
+                    if (paging.nhomkh_id > 0)
                         qry += $" and tb.nhom_kh in({String.Join(",", paging.nhomkh_id)})";
                     // Search
                     if (!string.IsNullOrEmpty(paging.search))
@@ -102,6 +102,40 @@ namespace VNPTBKN.API.Controllers
             finally { }
         }
         [HttpGet("[action]")]
+        public async Task<IActionResult> GetReport([FromQuery] Paging paging)
+        {
+            try
+            {
+                using (var db = new TM.Core.Connection.Oracle())
+                {
+                    var nd = db.Connection.getUserFromToken(TM.Core.HttpContext.Header("Authorization"));
+                    if (nd == null) return Json(new { msg = TM.Core.Common.Message.error_token.ToString() });
+                    // Đơn vị
+                    if (!nd.inRoles("donvi.select"))
+                        paging.donvi_id = nd.donvi_id;
+                    // Người dùng
+                    if (!nd.inRoles("nguoidung.select"))
+                        paging.ma_nd = nd.ma_nd;
+
+                    var param = new Dapper.Oracle.OracleDynamicParameters("returnds");
+                    param.Add("vdonvi_id", paging.donvi_id);
+                    param.Add("vma_nd", paging.ma_nd);
+                    param.Add("vnhomkh_id", paging.nhomkh_id);
+                    param.Add("vtrang_thai", paging.flag);
+                    param.Add("vket_qua", paging.ket_qua);
+                    // Paging Params
+                    return Json(new
+                    {
+                        data = await db.Connection.QueryAsync("baocao.baocao_kehoach", param, commandType: System.Data.CommandType.StoredProcedure),
+                        msg = TM.Core.Common.Message.success.ToString()
+                    });
+                }
+            }
+            catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
+            finally { }
+        }
+
+        [HttpGet("[action]")]
         public async Task<IActionResult> GetThucHienTB([FromQuery] Paging paging)
         {
             try
@@ -133,15 +167,15 @@ namespace VNPTBKN.API.Controllers
                         if (nd.cap_quyen > 2)
                             qry += $" and th.ma_nd in('{nd.ma_nd}')";
                         else
-                          if (paging.ma_nd != null && paging.ma_nd.Count > 0) // if (!string.IsNullOrEmpty(paging.ma_nd))
+                          if (paging.ma_nd != null) // if (!string.IsNullOrEmpty(paging.ma_nd))
                             qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                     }
-                    if (nd.inRoles("donvi.select") && paging.donvi_id != null && paging.donvi_id.Count > 0)
+                    if (nd.inRoles("donvi.select") && paging.donvi_id > 0)
                         qry += $" and tb.donvi_id in({String.Join(",", paging.donvi_id)})";
-                    if (nd.inRoles("nguoidung.select") && paging.ma_nd != null && paging.ma_nd.Count > 0)
+                    if (nd.inRoles("nguoidung.select") && paging.ma_nd != null)
                         qry += $" and th.ma_nd in('{String.Join("','", paging.ma_nd)}')";
                     // Nhóm kế hoạch
-                    if (paging.nhomkh_id != null && paging.nhomkh_id.Count > 0)
+                    if (paging.nhomkh_id > 0)
                         qry += $" and tb.nhom_kh in({String.Join(",", paging.nhomkh_id)})";
                     // Search
                     if (!string.IsNullOrEmpty(paging.search))
@@ -247,8 +281,7 @@ namespace VNPTBKN.API.Controllers
                     if (!nd.inRoles("donvi.select"))
                         qry += $" and dv.donvi_id in({nd.donvi_id})";
                     else
-                       if (paging.donvi_id != null && paging.donvi_id.Count > 0)
-                        qry += $" and dv.donvi_id in({String.Join(",", paging.donvi_id)})";
+                       if (paging.donvi_id > 0) qry += $" and dv.donvi_id in({paging.donvi_id})";
                     qry += "order by dnd.donvi_id,dnd.ma_nd";
                     var data = await db.Connection.QueryAsync<nguoi_dung>(qry);
                     return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
@@ -351,9 +384,9 @@ namespace VNPTBKN.API.Controllers
                             // }
                             success++;
                         }
-                        catch (System.Exception)
+                        catch (System.Exception ex)
                         {
-                            ImportData(error, csv, index, "Sai định dạng");
+                            ImportData(error, csv, index, ex.Message);//"Sai định dạng"
                             // var tmp = new template_import();
                             // tmp.ma_tb = csv[index][0];
                             // tmp.ten_tb = csv[index][1];
@@ -630,9 +663,9 @@ namespace VNPTBKN.API.Controllers
         }
         public partial class Paging : TM.Core.Common.Paging
         {
-            public List<int> donvi_id { get; set; }
-            public List<int> nhomkh_id { get; set; }
-            public List<string> ma_nd { get; set; }
+            public int donvi_id { get; set; }
+            public int nhomkh_id { get; set; }
+            public string ma_nd { get; set; }
             public int? ket_qua { get; set; }
         }
         public partial class request_import

@@ -119,8 +119,8 @@ namespace VNPTBKN.API.Controllers
             {
                 using (var db = new TM.Core.Connection.Oracle())
                 {
-                    var qry = $"select * from db_nguoidung where donvi_id={id}";
-                    var data = await db.Connection.QueryFirstOrDefaultAsync<Authentication.Core.DBNguoidung>(qry);
+                    var qry = $"select * from db_nguoidung where donvi_id={id} and trangthai>0";
+                    var data = await db.Connection.QueryAsync<Authentication.Core.DBNguoidung>(qry);
                     return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
                 }
             }

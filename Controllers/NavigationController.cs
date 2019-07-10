@@ -23,7 +23,7 @@ namespace VNPTBKN.API.Controllers
                 {
                     var qry = "select * from ttkd_bkn.Navigation";
                     var data = await db.Connection.QueryAsync<Models.Core.Navigation>(qry);
-                    return Json(new { data = data, msg = TM.Core.Common.Message.success.ToString() });
+                    return Json(data);
                 }
             }
             catch (System.Exception) { return Json(new { msg = TM.Core.Common.Message.danger.ToString() }); }
