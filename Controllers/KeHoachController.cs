@@ -352,7 +352,7 @@ namespace VNPTBKN.API.Controllers
             try
             {
               if (index < 1) continue;
-              data.id = Guid.NewGuid().ToString("N");
+              // data.id = Guid.NewGuid().ToString("N");
               data.nhom_kh = req.nhomkh_id;
               data.donvi_id = req.donvi_id;
               data.ma_tb = csv[index][0].Trim();
